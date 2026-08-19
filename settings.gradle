@@ -1,0 +1,3 @@
+rootProject.name = "enchantment_tweaks";
+
+include("core");

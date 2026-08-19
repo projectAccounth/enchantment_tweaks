@@ -1,0 +1,12 @@
+# Workspace files
+.gradle/
+.vscode/
+.eclipse/
+
+# Binaries
+build/
+bin/
+
+# Personal scripts
+*.sh
+*.py

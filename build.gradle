@@ -1,0 +1,12 @@
+plugins {
+    id 'com.gradleup.shadow' version '9.3.1' apply false
+}
+
+allprojects {
+    group = project.maven_group;
+    version = project.version;
+
+    repositories {
+        mavenCentral();
+    }
+}
