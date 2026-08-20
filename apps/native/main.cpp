@@ -1,3 +1,8 @@
+#include "application/application.hpp"
+using namespace enchantment_tweaks::app;
+
 int main() {
-    return 0;
+  Backend backend;
+
+  return 0;
 }
