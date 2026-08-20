@@ -262,6 +262,10 @@ inline fs::path tryGetMcClient(const std::string &versionId) {
                 "This executable might have executed at a location with "
                 "insufficient permissions. Move it somewhere else or execute "
                 "it as superuser/administrator.");
+  } catch (const std::exception &e) {
+    std::cerr << "Unexpected exception: " << e.what() << '\n';
+    exitProgram(ExitStatus::ERROR,
+                "This might be a bug, please report this to the developer");
   }
 }
 

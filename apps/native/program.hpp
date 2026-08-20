@@ -1,10 +1,11 @@
 #pragma once
 
+#include <cstdint>
 #include <iostream>
 
 namespace enchantment_tweaks::app {
 
-enum class ExitStatus { OK, ERROR, ABORTED };
+enum class ExitStatus : uint8_t { OK = 0, ERROR = 1, ABORTED = 16 };
 
 inline std::string statusToString(const ExitStatus &status) {
   switch (status) {
@@ -17,15 +18,22 @@ inline std::string statusToString(const ExitStatus &status) {
   }
 }
 
-inline void exitProgram(const ExitStatus &status,
-                        const std::string &exitMsg = "") {
+class TerminationException : public std::runtime_error {
+private:
+  ExitStatus status;
+
+public:
+  TerminationException(const std::string &message, ExitStatus st)
+      : std::runtime_error(message), status(st) {}
+
+  int getExitCode() const { return static_cast<uint8_t>(status); }
+};
+
+[[noreturn]] inline void exitProgram(const ExitStatus &status,
+                                     const std::string &exitMsg = "") {
   std::clog << "Program completed with status " << statusToString(status)
             << '\n';
-  if (exitMsg.length() > 0) {
-    std::clog << "Note: " << exitMsg << '\n';
-    std::cout << exitMsg << '\n';
-  }
-  exit(0);
+  throw TerminationException(exitMsg, status);
 }
 
 } // namespace enchantment_tweaks::app
