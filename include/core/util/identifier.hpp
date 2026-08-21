@@ -5,11 +5,14 @@
 #include "core/util/string.hpp"
 #include <algorithm>
 #include <cctype>
+#include <filesystem>
 #include <stdexcept>
 #include <string>
 #include <vector>
 
 namespace enchantment_tweaks {
+
+namespace fs = std::filesystem;
 
 class Identifier {
 private:
@@ -43,6 +46,15 @@ public:
 
   bool operator!=(const Identifier &other) const { return !(*this == other); }
 
+  std::string getNamespace() const { return _namespace; }
+  std::string getPath() const { return _path; }
+  std::string getString() const { return _namespace + ":" + _path; }
+
+  /// Gets the FS path with a suffix for extension or something idk
+  fs::path getFsPath(const std::string &suf = "") const {
+    return fs::path(_namespace) / (_path + suf);
+  }
+
   inline static Identifier parse(const std::string &str) {
     std::vector<std::string> elems = util::split(str, ":");
 
@@ -64,3 +76,12 @@ public:
 };
 
 } // namespace enchantment_tweaks
+
+namespace std {
+template <> struct hash<enchantment_tweaks::Identifier> {
+  size_t operator()(const enchantment_tweaks::Identifier &id) const noexcept {
+    return util::hash_multiple(id.getNamespace(), id.getPath());
+  }
+};
+
+} // namespace std

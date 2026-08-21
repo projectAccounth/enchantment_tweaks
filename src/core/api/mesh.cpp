@@ -1,6 +1,9 @@
 #include "core/api/mesh.hpp"
+#include "core/util/identifier.hpp"
+#include "core/util/mesh/types.hpp"
 
 #include <cmath>
+#include <stdexcept>
 
 namespace enchantment_tweaks::mesh {
 
@@ -41,7 +44,7 @@ std::optional<Element> MeshBuilder::makeElement(
   el.to = {x2, y2, z2};
 
   auto addFace = [&](const char *name, const std::optional<UV> &uv) {
-    if (uv) el.faces[name] = Face{*uv, textureVar};
+    if (uv) el.faces[stringToFaceDir(name)] = Face{*uv, textureVar};
   };
   addFace("north", uvNorth);
   addFace("south", uvSouth);
@@ -194,55 +197,61 @@ void MeshBuilder::appendOutlineElements(
   }
 }
 
-std::map<std::string, DisplayTransform> MeshBuilder::defaultDisplay() {
-  std::map<std::string, DisplayTransform> d;
+std::map<DisplayTransformTypes, DisplayTransform>
+MeshBuilder::defaultDisplay() {
+  std::map<DisplayTransformTypes, DisplayTransform> d;
 
   DisplayTransform thirdR;
   thirdR.rotation = Vec3{0, -90, 55};
   thirdR.translation = Vec3{0, 4, 0.5};
   thirdR.scale = Vec3{0.85, 0.85, 0.85};
-  d["thirdperson_righthand"] = thirdR;
+  d[DisplayTransformTypes::THIRD_PERSON_RHAND] = thirdR;
 
   DisplayTransform thirdL;
   thirdL.rotation = Vec3{0, 90, -55};
   thirdL.translation = Vec3{0, 4, 0.5};
   thirdL.scale = Vec3{0.85, 0.85, 0.85};
-  d["thirdperson_lefthand"] = thirdL;
+  d[DisplayTransformTypes::THIRD_PERSON_LHAND] = thirdL;
 
   DisplayTransform firstR;
   firstR.rotation = Vec3{0, -90, 25};
   firstR.translation = Vec3{1.13, 3.2, 1.13};
   firstR.scale = Vec3{0.68, 0.68, 0.68};
-  d["firstperson_righthand"] = firstR;
+  d[DisplayTransformTypes::FIRST_PERSON_RHAND] = firstR;
 
   DisplayTransform firstL;
   firstL.rotation = Vec3{0, 90, -25};
   firstL.translation = Vec3{1.13, 3.2, 1.13};
   firstL.scale = Vec3{0.68, 0.68, 0.68};
-  d["firstperson_lefthand"] = firstL;
+  d[DisplayTransformTypes::FIRST_PERSON_LHAND] = firstL;
 
   DisplayTransform ground;
   ground.translation = Vec3{0, 2, 0};
   ground.scale = Vec3{0.5, 0.5, 0.5};
-  d["ground"] = ground;
+  d[DisplayTransformTypes::GROUND] = ground;
 
-  d["gui"] = DisplayTransform{}; // default
+  d[DisplayTransformTypes::GUI] = DisplayTransform{}; // default
 
   DisplayTransform head;
   head.rotation = Vec3{0, 180, 0};
   head.translation = Vec3{0, 13, 7};
-  d["head"] = head;
+  d[DisplayTransformTypes::HEAD] = head;
 
   DisplayTransform fixed;
   fixed.rotation = Vec3{0, 180, 0};
   fixed.translation = Vec3{0, 0, -2.5};
   fixed.scale = Vec3{0.5, 0.5, 0.5};
-  d["fixed"] = fixed;
+  d[DisplayTransformTypes::FIXED] = fixed;
 
   return d;
 }
 
 Model MeshBuilder::Build(const BuildOptions &options) const {
+  if (options.outlineSizePx <= 0 && options.outlineOnly) {
+    throw std::invalid_argument(
+        "No outline present while specifying outline only mode, aborting");
+  }
+
   const int w = image_.width();
 
   const double zHalf = (options.thicknessPx * MODEL_UNITS / w) / 2.0;
@@ -253,25 +262,32 @@ Model MeshBuilder::Build(const BuildOptions &options) const {
   }
 
   Model model;
-  const std::string textureRef =
-      options.textureNamespace + ":" + options.textureKey;
-  model.textures["texture"] = textureRef;
+  const Identifier textureRef =
+      Identifier(options.textureNamespace, options.textureKey);
   model.textures["particle"] = textureRef;
+  if (!options.outlineOnly) {
 
-  if (options.mergeColumns) {
-    appendMergedElements(options, z1, z2, model.elements);
-  } else {
-    appendPerPixelElements(options, z1, z2, model.elements);
+    model.textures["texture"] = textureRef;
+
+    if (options.mergeColumns) {
+      appendMergedElements(options, z1, z2, model.elements);
+    } else {
+      appendPerPixelElements(options, z1, z2, model.elements);
+    }
   }
 
+  // TODO: do item-specific display later
   model.display = defaultDisplay();
+
+  for (const auto &[k, v] : options.overrideTransforms) {
+    model.display[k] = v;
+  }
 
   if (options.outlineSizePx > 0.0) {
     const std::string oNamespace =
         options.outlineTextureNamespace.value_or(options.textureNamespace);
-    const std::string oKey =
-        options.outlineTextureKey.value_or(options.textureKey + "_outline");
-    model.textures["outline"] = oNamespace + ":" + oKey;
+    const std::string oKey = options.outlineTextureKey.value_or("outline");
+    model.textures["outline"] = Identifier(oNamespace, oKey);
 
     const auto occupied = computeOccupancy();
     appendOutlineElements(options, z1, z2, occupied, model.elements);

@@ -1,8 +1,8 @@
 #pragma once
 
 #include "core/util/image.hpp"
+#include "core/util/mesh/types.hpp"
 
-#include <array>
 #include <map>
 #include <optional>
 #include <string>
@@ -12,44 +12,20 @@ namespace enchantment_tweaks::mesh {
 
 constexpr double MODEL_UNITS = 16.0;
 
-using Vec3 = std::array<double, 3>;
-using UV = std::array<double, 4>;
-
-struct Face {
-  UV uv{};
-  std::string texture; // e.g. "#texture"
-};
-
-struct Element {
-  Vec3 from{};
-  Vec3 to{};
-  std::map<std::string, Face>
-      faces; // keyed by "north", "south", "up", "down", "west", "east"
-};
-
-struct DisplayTransform {
-  std::optional<Vec3> rotation;
-  std::optional<Vec3> translation;
-  std::optional<Vec3> scale;
-};
-
-struct Model {
-  std::map<std::string, std::string> textures; // "texture" -> "ns:key", etc.
-  std::vector<Element> elements;
-  std::map<std::string, DisplayTransform> display;
-};
-
 struct BuildOptions {
   double thicknessPx = 1.0;
   std::string textureNamespace = "minecraft";
-  std::string textureKey = "item/generated";
+  std::string textureKey = "missingno";
   bool cullTransparent = true;
   bool mergeColumns = false;
 
-  // Optional expanded backface outline shell.
+  bool outlineOnly = true;
+
   double outlineSizePx = 0.0;
   std::optional<std::string> outlineTextureNamespace;
   std::optional<std::string> outlineTextureKey;
+
+  std::map<DisplayTransformTypes, DisplayTransform> overrideTransforms;
 };
 
 // one per img
@@ -81,7 +57,7 @@ private:
                              const std::vector<std::vector<bool>> &occupied,
                              std::vector<Element> &out) const;
 
-  static std::map<std::string, DisplayTransform> defaultDisplay();
+  static std::map<DisplayTransformTypes, DisplayTransform> defaultDisplay();
 };
 
 } // namespace enchantment_tweaks::mesh

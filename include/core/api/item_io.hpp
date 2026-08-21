@@ -1,10 +1,15 @@
 #pragma once
 
 #include "core/api/mesh.hpp"
+#include "libraries/nlohmann/json.hpp"
 
 #include <string>
 
 namespace enchantment_tweaks::item {
+
+using nlohmann::json;
+
+mesh::Model fromJson(const json &json);
 
 std::string serialize(const mesh::Model &model, int indent = 2);
 
