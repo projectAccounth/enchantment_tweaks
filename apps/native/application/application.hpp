@@ -28,6 +28,20 @@ public:
     return iterator->second.invoke(arguments);
   }
 
+  void registerCommands() {
+    // ok what the fuck can i do with this
+    command("exit").description("Exit program").handler([this]() {
+      active = false;
+    });
+  }
+
+  void initParsers() {}
+
+  void loop() {
+    while (active) {
+    }
+  }
+
   void printCommands() const {
     for (const auto &[name, command] : commands_) {
       std::cout << name << '\n';
@@ -44,6 +58,7 @@ public:
 
 private:
   std::unordered_map<std::string, Command> commands_;
+  bool active = true;
 };
 
 } // namespace enchantment_tweaks::app
