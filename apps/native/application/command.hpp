@@ -53,7 +53,7 @@ public:
     return *this;
   }
 
-  template <typename T> CommandBuilder &required(std::string name) {
+  template <typename T> CommandBuilder &required(const std::string &name) {
     arguments_.push_back({.name = std::move(name),
                           .typeName = cleanTypeName<T>(),
                           .required = true});
@@ -61,7 +61,7 @@ public:
     return *this;
   }
 
-  template <typename T> CommandBuilder &optional(std::string name) {
+  template <typename T> CommandBuilder &optional(const std::string &name) {
     arguments_.push_back({.name = std::move(name),
                           .typeName = cleanTypeName<T>(),
                           .required = false});
