@@ -1,6 +1,6 @@
 #pragma once
 
-#include "core/api/mesh.hpp"
+#include "core/types/mesh/types.hpp"
 #include "libraries/nlohmann/json.hpp"
 
 #include <string>

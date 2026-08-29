@@ -1,12 +1,10 @@
 #pragma once
 
+#include "core/types/mesh/types.hpp"
 #include "core/util/image.hpp"
-#include "core/util/mesh/types.hpp"
 
-#include <map>
 #include <optional>
 #include <string>
-#include <vector>
 
 namespace enchantment_tweaks::mesh {
 
@@ -25,7 +23,7 @@ struct BuildOptions {
   std::optional<std::string> outlineTextureNamespace;
   std::optional<std::string> outlineTextureKey;
 
-  std::map<DisplayTransformTypes, DisplayTransform> overrideTransforms;
+  std::map<DisplayTransformType, DisplayTransform> overrideTransforms;
 };
 
 // one per img
@@ -33,7 +31,7 @@ class MeshBuilder {
 public:
   explicit MeshBuilder(const image::Image &img);
 
-  Model Build(const BuildOptions &options) const;
+  Model build(const BuildOptions &options) const;
 
 private:
   const image::Image &image_;
@@ -44,10 +42,10 @@ private:
 
   static std::optional<Element>
   makeElement(double x1, double y1, double z1, double x2, double y2, double z2,
-              std::optional<UV> uvNorth, std::optional<UV> uvSouth,
-              std::optional<UV> uvUp, std::optional<UV> uvDown,
-              std::optional<UV> uvWest, std::optional<UV> uvEast,
-              const std::string &textureVar);
+              const std::optional<Uv> &uvNorth,
+              const std::optional<Uv> &uvSouth, const std::optional<Uv> &uvUp,
+              const std::optional<Uv> &uvDown, const std::optional<Uv> &uvWest,
+              const std::optional<Uv> &uvEast, const std::string &textureVar);
 
   void appendPerPixelElements(const BuildOptions &options, double z1, double z2,
                               std::vector<Element> &out) const;
@@ -57,7 +55,7 @@ private:
                              const std::vector<std::vector<bool>> &occupied,
                              std::vector<Element> &out) const;
 
-  static std::map<DisplayTransformTypes, DisplayTransform> defaultDisplay();
+  static std::map<DisplayTransformType, DisplayTransform> defaultDisplay();
 };
 
 } // namespace enchantment_tweaks::mesh

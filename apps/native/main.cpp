@@ -7,7 +7,7 @@ int main() {
 
     Backend backend;
 
-    exitProgram(ExitStatus::OK);
+    exitProgram(ExitStatus::Ok);
 
   } catch (const TerminationException &e) {
     std::cout << "Program terminated due to request: " << e.what();

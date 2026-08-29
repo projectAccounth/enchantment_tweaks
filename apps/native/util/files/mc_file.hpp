@@ -11,7 +11,7 @@
 namespace enchantment_tweaks::app {
 
 namespace fs = std::filesystem;
-using json = nlohmann::json;
+using nlohmann::json;
 
 // -------------------------
 // constants
@@ -22,8 +22,8 @@ inline static constexpr const char *MANIFEST_URL =
 
 inline static const fs::path CLIENT_FILES = ASSETS / "versions";
 
-static inline bool _fetchMcClient(const std::string &versionId,
-                                  const fs::path &outputDirectory) {
+static inline bool fetchMcClient(const std::string &versionId,
+                                 const fs::path &outputDirectory) {
   const NetworkManager &net = NetworkManager::getInstance();
   try {
     // output
@@ -245,26 +245,26 @@ inline fs::path tryGetMcClient(const std::string &versionId) {
     if (!fs::exists(versionJar)) {
       std::cout << "Version JAR for " << versionId
                 << " not found. Downloading.\n";
-      completionStatus = _fetchMcClient(versionId, versionPath);
+      completionStatus = fetchMcClient(versionId, versionPath);
     } else {
       completionStatus = true;
     }
 
     if (!completionStatus) {
       std::cerr << "Client file search failed. Exiting.\n";
-      exitProgram(ExitStatus::ERROR);
+      exitProgram(ExitStatus::Error);
     }
 
     return versionJar;
   } catch (const fs::filesystem_error &e) {
     std::cerr << "Filesystem error: " << e.what() << '\n';
-    exitProgram(ExitStatus::ERROR,
+    exitProgram(ExitStatus::Error,
                 "This executable might have executed at a location with "
                 "insufficient permissions. Move it somewhere else or execute "
                 "it as superuser/administrator.");
   } catch (const std::exception &e) {
     std::cerr << "Unexpected exception: " << e.what() << '\n';
-    exitProgram(ExitStatus::ERROR,
+    exitProgram(ExitStatus::Error,
                 "This might be a bug, please report this to the developer");
   }
 }

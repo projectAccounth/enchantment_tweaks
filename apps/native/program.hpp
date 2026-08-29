@@ -5,15 +5,15 @@
 
 namespace enchantment_tweaks::app {
 
-enum class ExitStatus : uint8_t { OK = 0, ERROR = 1, ABORTED = 16 };
+enum class ExitStatus : uint8_t { Ok = 0, Error = 1, Aborted = 16 };
 
 inline std::string statusToString(const ExitStatus &status) {
   switch (status) {
-  case ExitStatus::OK:
+  case ExitStatus::Ok:
     return "OK";
-  case ExitStatus::ERROR:
+  case ExitStatus::Error:
     return "ERROR";
-  case ExitStatus::ABORTED:
+  case ExitStatus::Aborted:
     return "ABORTED";
   }
 }
