@@ -14,7 +14,7 @@ namespace enchantment_tweaks::app {
 class Backend {
 public:
   CommandBuilder command(std::string name) {
-    return CommandBuilder(commands_, std::move(name));
+    return {commands_, std::move(name)};
   }
 
   Result invoke(const std::string &name,

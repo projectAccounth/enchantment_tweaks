@@ -30,8 +30,10 @@ Pixel Image::at(int x, int y) const {
                             ") out of range");
   }
   const size_t idx = (static_cast<size_t>(y) * width_ + x) * 4;
-  return {pixels_[idx + 0], pixels_[idx + 1], pixels_[idx + 2],
-          pixels_[idx + 3]};
+  return {.r = pixels_[idx + 0],
+          .g = pixels_[idx + 1],
+          .b = pixels_[idx + 2],
+          .a = pixels_[idx + 3]};
 }
 
 bool Image::isOpaque(int x, int y) const { return at(x, y).a != 0; }
