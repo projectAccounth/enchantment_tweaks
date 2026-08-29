@@ -17,10 +17,10 @@ class Image {
 public:
   Image() = default;
 
-  static Image Load(const std::string &path);
+  static Image load(const std::string &path);
 
-  int width() const noexcept { return width_; }
-  int height() const noexcept { return height_; }
+  [[nodiscard]] int width() const noexcept { return width_; }
+  [[nodiscard]] int height() const noexcept { return height_; }
   bool empty() const noexcept { return width_ == 0 || height_ == 0; }
 
   Pixel at(int x, int y) const;

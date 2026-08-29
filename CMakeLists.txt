@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.23)
+cmake_minimum_required(VERSION 3.24)
 project(enchantment_tweaks CXX)
 
 set(CMAKE_CXX_STANDARD 20)
@@ -27,7 +27,7 @@ if(NOT EMSCRIPTEN)
         set(BUILD_TESTING OFF CACHE INTERNAL "")
         set(CURL_DISABLE_TESTS ON CACHE INTERNAL "")
         set(CURL_DISABLE_DOCS ON CACHE INTERNAL "")
-        
+
         set(BUILD_SHARED_LIBS OFF CACHE INTERNAL "")
         set(BUILD_STATIC_LIBS ON CACHE INTERNAL "")
 
@@ -43,12 +43,38 @@ if(NOT EMSCRIPTEN)
         FetchContent_MakeAvailable(curl)
     endif()
 
+    set(wxBUILD_SHARED OFF CACHE BOOL "Build shared libraries" FORCE)
+    set(wxBUILD_SAMPLES OFF CACHE BOOL "Build wxWidgets samples" FORCE)
+    set(wxBUILD_TESTS OFF CACHE BOOL "Build wxWidgets tests" FORCE)
+
+    FetchContent_Declare(
+        wxWidgets
+        GIT_REPOSITORY https://github.com/wxWidgets/wxWidgets.git
+        GIT_TAG        v3.3.3
+        FIND_PACKAGE_ARGS COMPONENTS core base
+    )
+
+    FetchContent_MakeAvailable(wxWidgets)
+
     add_executable(native ${SHARED_SOURCES} apps/native/main.cpp)
     target_include_directories(native PRIVATE include)
     target_include_directories(native PRIVATE apps/native)
 
     target_link_libraries(native PRIVATE libcurl)
-    
+    target_link_libraries(native PRIVATE wx::core wx::base)
+
+    if(TARGET wx::core)
+        target_link_libraries(native PRIVATE wx::core wx::base)
+    else()
+        include(${wxWidgets_USE_FILE})
+        target_link_libraries(native PRIVATE ${wxWidgets_LIBRARIES})
+    endif()
+
+    # windows pops a console window if one is not a Win32 graphical executable
+    if(WIN32)
+        set_target_properties(native PROPERTIES WIN32_EXECUTABLE TRUE)
+    endif()
+
     set_target_properties(native PROPERTIES
         RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin"
     )
@@ -60,11 +86,11 @@ if(EMSCRIPTEN)
     target_include_directories(wasm_api PRIVATE include)
     target_include_directories(wasm_api PRIVATE apps/wasm)
 
-    target_link_options(wasm_api PRIVATE 
+    target_link_options(wasm_api PRIVATE
         "-sEXPORTED_RUNTIME_METHODS=['ccall','cwrap']"
         "-sMODULARIZE=1"
         "-sEXPORT_NAME='createWasmModule'"
-        "-sALLOW_MEMORY_GROWTH=1" 
+        "-sALLOW_MEMORY_GROWTH=1"
     )
 
     set_target_properties(wasm_api PROPERTIES
