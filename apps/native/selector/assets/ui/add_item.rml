@@ -1,0 +1,44 @@
+<rml>
+<head>
+	<title>Add item</title>
+	<link type="text/rcss" href="selector.rcss"/>
+</head>
+<body class="modal" data-model="selector" data-event-click="dialog_backdrop">
+	<div class="dialog">
+		<h2>Add item</h2>
+
+		<div class="field">
+			<label>Namespace</label>
+			<select id="item-ns" data-value="item_form.ns">
+				<option data-for="n : namespaces" data-attr-value="n.id">{{ n.label }} ({{ n.id }})</option>
+			</select>
+		</div>
+
+		<div class="field">
+			<label>Item name</label>
+			<input type="text" id="item-name" maxlength="48" data-value="item_form.name" data-event-change="item_name_changed"/>
+		</div>
+
+		<div class="field">
+			<label>Item ID</label>
+			<input type="text" id="item-id" maxlength="64" data-value="item_form.id" data-event-change="item_id_changed"/>
+		</div>
+		<p class="field-hint">Lowercase letters, numbers and underscores. Filled in from the name.</p>
+
+		<div class="field">
+			<label>Icon <span class="opt">(optional)</span></label>
+			<div class="icon-row">
+				<button class="pill" data-event-click="pick_icon"><span>Choose file...</span></button>
+				<span class="file">{{ item_form.icon_name == '' ? 'No file chosen' : item_form.icon_name }}</span>
+			</div>
+		</div>
+
+		<p class="err" data-if="item_form.error != ''">{{ item_form.error }}</p>
+
+		<div class="dlg-actions">
+			<button class="pill" data-event-click="close_dialog"><span>Cancel</span></button>
+			<button class="pill accent" data-event-click="submit_item"><span>Add item</span></button>
+		</div>
+	</div>
+</body>
+</rml>

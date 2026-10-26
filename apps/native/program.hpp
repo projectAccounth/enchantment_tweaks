@@ -2,6 +2,8 @@
 
 #include <cstdint>
 #include <iostream>
+#include <stdexcept>
+#include <string>
 
 namespace enchantment_tweaks::app {
 
@@ -16,6 +18,7 @@ inline std::string statusToString(const ExitStatus &status) {
   case ExitStatus::Aborted:
     return "ABORTED";
   }
+  throw std::invalid_argument("");
 }
 
 class TerminationException : public std::runtime_error {
@@ -35,5 +38,7 @@ public:
             << '\n';
   throw TerminationException(exitMsg, status);
 }
+
+inline void error(const std::string &msg) {}
 
 } // namespace enchantment_tweaks::app

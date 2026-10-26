@@ -21,11 +21,11 @@ struct Result {
   std::string message;
 
   static Result ok(std::string message = {}) {
-    return {true, std::move(message)};
+    return {.success = true, .message = std::move(message)};
   }
 
   static Result error(std::string message) {
-    return {false, std::move(message)};
+    return {.success = false, .message = std::move(message)};
   }
 };
 

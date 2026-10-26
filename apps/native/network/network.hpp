@@ -1,10 +1,14 @@
 #pragma once
 
+#include <cstdio>
 #include <curl/curl.h>
 #include <filesystem>
 #include <iostream>
 #include <string>
+#include <type_traits>
 #include <variant>
+
+#include "core/util/debug.hpp"
 
 namespace enchantment_tweaks::app {
 
@@ -26,7 +30,7 @@ public:
   using DownloadTarget = std::variant<std::string *, fs::path>;
 
   bool download(const std::string &url, DownloadTarget target,
-                bool showProgress = false) const {
+                bool showProgress = true) const {
     CURL *curl = curl_easy_init();
     if (!curl) return false;
 
@@ -36,6 +40,8 @@ public:
     curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
     curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1L);
     curl_easy_setopt(curl, CURLOPT_USERAGENT, "");
+    curl_easy_setopt(curl, CURLOPT_PROTOCOLS_STR, "http,https");
+    curl_easy_setopt(curl, CURLOPT_FAILONERROR, 1L);
 
     if (showProgress) {
       curl_easy_setopt(curl, CURLOPT_NOPROGRESS, 0L);
@@ -63,17 +69,18 @@ public:
 
     if (std::holds_alternative<std::string *>(target) || filePtr != nullptr) {
       CURLcode res = curl_easy_perform(curl);
-      if (showProgress) std::cout << std::endl;
+      if (showProgress) debug::Logger::info() << '\n';
 
       if (res == CURLE_OK) {
         success = true;
       } else {
-        std::cerr << "[Error]: " << curl_easy_strerror(res) << std::endl;
+        debug::Logger::error()
+            << "[Error]: " << curl_easy_strerror(res) << '\n';
       }
     }
 
     if (filePtr) {
-      std::fclose(filePtr);
+      [[maybe_unused]] auto discarded = std::fclose(filePtr);
     }
     curl_easy_cleanup(curl);
 
@@ -95,7 +102,7 @@ private:
 
   static size_t fileWriteCallback(void *ptr, size_t size, size_t nmemb,
                                   void *stream) {
-    return std::fwrite(ptr, size, nmemb, static_cast<FILE *>(stream));
+    return std::fwrite(ptr, size, nmemb, static_cast<FILE *>(stream)) * size;
   }
 
   /// s1mple progress bar
@@ -110,17 +117,16 @@ private:
     int barWidth = 30;
     int progressWidth = static_cast<int>((percentage / 100.0) * barWidth);
 
-    std::cout << "\r[";
+    debug::Logger::info() << "\r[";
     for (int i = 0; i < barWidth; ++i) {
       if (i < progressWidth)
-        std::cout << "=";
+        debug::Logger::info() << "=";
       else if (i == progressWidth)
-        std::cout << ">";
+        debug::Logger::info() << ">";
       else
-        std::cout << " ";
+        debug::Logger::info() << " ";
     }
     std::printf("] %.1f%%", percentage);
-    std::cout.flush();
     return 0;
   }
 };

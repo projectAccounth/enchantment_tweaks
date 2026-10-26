@@ -1,0 +1,118 @@
+<rml>
+<head>
+	<title>Enchantment Tweaks</title>
+	<link type="text/rcss" href="selector.rcss"/>
+</head>
+<body class="app" data-model="selector" data-event-click="body_click">
+
+	<div class="topbar">
+		<button class="brand" data-event-click="open_link('home')"><img src="../icons/logo.png"/></button>
+		<div class="tag"><span>Selector</span></div>
+	</div>
+
+	<div class="shell">
+
+		<!-- ============================ sidebar ============================ -->
+		<div class="sidebar">
+
+			<div class="panel">
+				<button class="head" data-event-click="toggle_collapsed('side:versions')">
+					<div class="ico chev" data-class-collapsed="versions_collapsed"></div>
+					<span class="t">Selected Versions</span>
+				</button>
+				<div class="panel-body" data-if="!versions_collapsed">
+					<div class="vers">
+						<button class="pill ver" data-for="v : versions" data-class-on="v.on" data-event-click="toggle_version(v.label)">
+							<div class="ico sm check-ok" data-if="v.on"></div>
+							<span>{{ v.label }}</span>
+						</button>
+					</div>
+				</div>
+			</div>
+
+			<div class="panel">
+				<button class="head" data-event-click="toggle_collapsed('side:created')">
+					<div class="ico chev" data-class-collapsed="created_collapsed"></div>
+					<span class="t">Created Items</span>
+				</button>
+				<div class="panel-body" data-if="!created_collapsed">
+					<div class="subs">
+						<p class="hint" data-if="created_groups.size == 0">Nothing yet. Select an item to add it to your pack.</p>
+						<div class="sub" data-for="g : created_groups">
+							<button class="head" data-event-click="toggle_collapsed(g.collapse_key)">
+								<div class="ico chev" data-class-collapsed="!g.open"></div>
+								<span class="t">{{ g.label }}</span>
+								<span class="ns">{{ g.ns_id }}</span>
+							</button>
+							<div class="chips" data-if="g.open">
+								<button class="pill chip" data-for="c : g.chips" data-event-click="remove_item(c.key)">
+									<div class="ico sm x"></div>
+									<span class="label">{{ c.name }}</span>
+								</button>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+
+			<div class="side-rule"></div>
+			<div class="actions">
+				<div class="pill count"><span>{{ created_label }}</span></div>
+				<button class="pill accent" data-attrif-disabled="!can_download" data-event-click="download"><span>Download Pack</span></button>
+			</div>
+			<p class="hint" data-if="!can_download">{{ download_hint }}</p>
+		</div>
+
+		<!-- ============================= catalog ============================= -->
+		<div class="main">
+
+			<div class="toolbar">
+				<div class="search">
+					<div class="ico magnifier"></div>
+					<input type="text" id="search" data-value="query" maxlength="64"/>
+					<span class="placeholder" data-if="query == ''">Search...</span>
+				</div>
+				<button class="pill with-icon" data-event-click="open_item_dialog"><div class="ico plus"></div><span>Add Item</span></button>
+				<button class="pill with-icon accent" data-event-click="open_ns_dialog"><div class="ico plus"></div><span>Add Namespace</span></button>
+			</div>
+
+			<div class="sortrow">
+				<button class="pill with-icon sort" data-event-click="toggle_sort_menu">
+					<div class="ico chev" data-class-collapsed="!sort_open"></div>
+					<span>Sort By</span>
+				</button>
+				<div class="menu" data-if="sort_open">
+					<button data-for="o : sort_options" data-event-click="set_sort(o.key)">
+						<div class="ico check" data-class-off="!o.checked"></div>
+						<span>{{ o.label }}</span>
+					</button>
+				</div>
+			</div>
+
+			<div class="sec" data-for="s : sections" data-if="s.visible">
+				<button class="head sec-head" data-event-click="toggle_collapsed(s.collapse_key)">
+					<div class="ico chev" data-class-collapsed="!s.open"></div>
+					<span class="t">{{ s.label }}</span>
+					<span class="ns">{{ s.ns_id }}</span>
+				</button>
+				<div class="rule"></div>
+				<div class="grid" data-if="s.open && !s.empty">
+					<button class="card" data-for="c : s.cards" data-if="c.visible" data-class-selected="c.selected" data-event-click="toggle_item(c.key)">
+						<div class="thumb">
+							<img data-attr-src="c.icon"/>
+							<div class="badge" data-if="c.selected"><div class="ico sm check-ok"></div></div>
+						</div>
+						<div class="name">{{ c.name }}</div>
+						<div class="id">{{ c.id }}</div>
+					</button>
+				</div>
+				<p class="empty" data-if="s.open && s.empty">No items in this namespace yet. Use Add Item to create one.</p>
+			</div>
+
+			<p class="empty" data-if="no_match">{{ no_match_text }}</p>
+		</div>
+	</div>
+
+	<div class="toast-wrap" data-if="toast_visible"><div class="toast"><span>{{ toast_text }}</span></div></div>
+</body>
+</rml>

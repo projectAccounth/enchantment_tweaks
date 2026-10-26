@@ -32,7 +32,16 @@ public:
     // ok what the fuck can i do with this
     command("exit").description("Exit program").handler([this]() {
       active = false;
+      return Result::ok();
     });
+
+    command("tryLoadMc")
+        .description("Tries to load a Minecraft version")
+        .required<std::string>("minecraft_version")
+        .handler([](std::string ver) {
+          ver = "a";
+          return Result::ok();
+        });
   }
 
   void initParsers() {}
@@ -44,15 +53,15 @@ public:
 
   void printCommands() const {
     for (const auto &[name, command] : commands_) {
-      std::cout << name << '\n';
-      std::cout << "  " << command.description() << '\n';
+      debug::Logger::info() << name << '\n';
+      debug::Logger::info() << "  " << command.description() << '\n';
       for (const auto &argument : command.arguments()) {
-        std::cout << "  " << (argument.required ? "<" : "[") << argument.name
-                  << ": " << argument.typeName
-                  << (argument.required ? ">" : "]") << '\n';
+        debug::Logger::info()
+            << "  " << (argument.required ? "<" : "[") << argument.name << ": "
+            << argument.typeName << (argument.required ? ">" : "]") << '\n';
       }
 
-      std::cout << '\n';
+      debug::Logger::info() << '\n';
     }
   }
 

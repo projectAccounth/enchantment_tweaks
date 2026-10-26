@@ -1,0 +1,13 @@
+{
+  "versions": ["26.2", "26.1.X", "1.21.11", "1.21.10"],
+  "namespaces": [
+    { "id": "minecraft", "label": "Vanilla" },
+    { "id": "create", "label": "Modded" }
+  ],
+  "items": [
+    { "ns": "minecraft", "id": "diamond_sword", "name": "Diamond Sword", "icon": "sword" },
+    { "ns": "minecraft", "id": "longest_item_name_possible", "name": "Longest Item Name Possible", "icon": "pickaxe" },
+    { "ns": "create", "id": "diamond_sword", "name": "Diamond Sword", "icon": "sword" },
+    { "ns": "create", "id": "longest_item_name_possible", "name": "Longest Item Name Possible", "icon": "pickaxe" }
+  ]
+}
