@@ -22,25 +22,9 @@ enum class TintSourceType : uint8_t {
   CustomModelData,
 };
 
-inline const EnumTable<TintSourceType> &tintSourceTypeTable() {
-  static const EnumTable<TintSourceType> table = {
-      {TintSourceType::Constant, "minecraft:constant"},
-      {TintSourceType::Dye, "minecraft:dye"},
-      {TintSourceType::Firework, "minecraft:firework"},
-      {TintSourceType::Grass, "minecraft:grass"},
-      {TintSourceType::MapColor, "minecraft:map_color"},
-      {TintSourceType::Potion, "minecraft:potion"},
-      {TintSourceType::Team, "minecraft:team"},
-      {TintSourceType::CustomModelData, "minecraft:custom_model_data"},
-  };
-  return table;
-}
-inline std::string toString(TintSourceType t) {
-  return enumToString(t, tintSourceTypeTable());
-}
-inline TintSourceType tintSourceTypeFromString(const std::string &s) {
-  return enumFromString(s, tintSourceTypeTable());
-}
+const EnumTable<TintSourceType> &tintSourceTypeTable();
+std::string toString(TintSourceType t);
+TintSourceType tintSourceTypeFromString(const std::string &s);
 
 class TintSource : public JsonSerializable {
 public:
@@ -49,14 +33,8 @@ public:
 
   TintSourceType type() const { return type_; }
 
-  json serialize() const override {
-    json j = json::object();
-    j["type"] = toString(type_);
-    serializeBody(j);
-    return j;
-  }
-
-  void deserialize(const json &j) override { deserializeBody(j); }
+  json serialize() const override;
+  void deserialize(const json &j) override;
 
   static std::unique_ptr<TintSource> create(const json &j);
 
@@ -74,10 +52,8 @@ public:
   RgbColor value;
 
 protected:
-  void serializeBody(json &j) const override { j["value"] = value.serialize(); }
-  void deserializeBody(const json &j) override {
-    value.deserialize(j.at("value"));
-  }
+  void serializeBody(json &j) const override;
+  void deserializeBody(const json &j) override;
 };
 
 // Shared for dye / firework / map_color / potion / team
@@ -87,12 +63,8 @@ public:
   RgbColor defaultColor;
 
 protected:
-  void serializeBody(json &j) const override {
-    j["default"] = defaultColor.serialize();
-  }
-  void deserializeBody(const json &j) override {
-    defaultColor.deserialize(j.at("default"));
-  }
+  void serializeBody(json &j) const override;
+  void deserializeBody(const json &j) override;
 };
 
 class DyeTintSource final : public DefaultColorTintSource {
@@ -127,14 +99,8 @@ public:
   double downfall = 0.0;
 
 protected:
-  void serializeBody(json &j) const override {
-    j["temperature"] = temperature;
-    j["downfall"] = downfall;
-  }
-  void deserializeBody(const json &j) override {
-    temperature = j.at("temperature").get<double>();
-    downfall = j.at("downfall").get<double>();
-  }
+  void serializeBody(json &j) const override;
+  void deserializeBody(const json &j) override;
 };
 
 class CustomModelDataTintSource final : public TintSource {
@@ -144,50 +110,8 @@ public:
   RgbColor defaultColor;
 
 protected:
-  void serializeBody(json &j) const override {
-    if (index != 0) {
-      j["index"] = index;
-    }
-    j["default"] = defaultColor.serialize();
-  }
-  void deserializeBody(const json &j) override {
-    index = readOptional<int>(j, "index").value_or(0);
-    defaultColor.deserialize(j.at("default"));
-  }
+  void serializeBody(json &j) const override;
+  void deserializeBody(const json &j) override;
 };
-
-inline std::unique_ptr<TintSource> TintSource::create(const json &j) {
-  const TintSourceType type =
-      tintSourceTypeFromString(j.at("type").get<std::string>());
-  std::unique_ptr<TintSource> result;
-  switch (type) {
-  case TintSourceType::Constant:
-    result = std::make_unique<ConstantTintSource>();
-    break;
-  case TintSourceType::Dye:
-    result = std::make_unique<DyeTintSource>();
-    break;
-  case TintSourceType::Firework:
-    result = std::make_unique<FireworkTintSource>();
-    break;
-  case TintSourceType::Grass:
-    result = std::make_unique<GrassTintSource>();
-    break;
-  case TintSourceType::MapColor:
-    result = std::make_unique<MapColorTintSource>();
-    break;
-  case TintSourceType::Potion:
-    result = std::make_unique<PotionTintSource>();
-    break;
-  case TintSourceType::Team:
-    result = std::make_unique<TeamTintSource>();
-    break;
-  case TintSourceType::CustomModelData:
-    result = std::make_unique<CustomModelDataTintSource>();
-    break;
-  }
-  result->deserialize(j);
-  return result;
-}
 
 } // namespace enchantment_tweaks::item

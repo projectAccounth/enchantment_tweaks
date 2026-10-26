@@ -17,31 +17,8 @@ public:
   double swapAnimationScale = 1.0; // optional, default 1.0
   std::unique_ptr<ItemModel> model;
 
-  json serialize() const override {
-    json j = json::object();
-    if (!handAnimationOnSwap) {
-      j["hand_animation_on_swap"] = handAnimationOnSwap;
-    }
-    if (oversizedInGui) {
-      j["oversized_in_gui"] = oversizedInGui;
-    }
-    if (swapAnimationScale != 1.0) {
-      j["swap_animation_scale"] = swapAnimationScale;
-    }
-    if (model) {
-      j["model"] = model->serialize();
-    }
-    return j;
-  }
-
-  void deserialize(const json &j) override {
-    handAnimationOnSwap =
-        readOptional<bool>(j, "hand_animation_on_swap").value_or(true);
-    oversizedInGui = readOptional<bool>(j, "oversized_in_gui").value_or(false);
-    swapAnimationScale =
-        readOptional<double>(j, "swap_animation_scale").value_or(1.0);
-    model = j.contains("model") ? ItemModel::create(j.at("model")) : nullptr;
-  }
+  json serialize() const override;
+  void deserialize(const json &j) override;
 };
 
 } // namespace enchantment_tweaks::item
