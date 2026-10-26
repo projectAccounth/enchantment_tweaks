@@ -1,5 +1,6 @@
 #include "core/util/image.hpp"
 #include "libraries/stb/stb_image.h"
+#include "libraries/stb/stb_image_write.h"
 
 #include <stdexcept>
 
@@ -37,5 +38,28 @@ Pixel Image::at(int x, int y) const {
 }
 
 bool Image::isOpaque(int x, int y) const { return at(x, y).a != 0; }
+
+void Image::setPixel(int x, int y, const Pixel &p) {
+  if (x < 0 || x >= width_ || y < 0 || y >= height_) {
+    throw std::out_of_range("enchantment_tweaks::image::Image::setPixel: (" +
+                            std::to_string(x) + ", " + std::to_string(y) +
+                            ") out of range");
+  }
+  const size_t idx = (static_cast<size_t>(y) * width_ + x) * 4;
+  pixels_[idx + 0] = p.r;
+  pixels_[idx + 1] = p.g;
+  pixels_[idx + 2] = p.b;
+  pixels_[idx + 3] = p.a;
+}
+
+void Image::save(const std::string &path) const {
+  if (width_ == 0 || height_ == 0) {
+    throw std::runtime_error("enchantment_tweaks::image::Image::save: empty image");
+  }
+  int result = stbi_write_png(path.c_str(), width_, height_, 4, pixels_.data(), width_ * 4);
+  if (result == 0) {
+    throw std::runtime_error("enchantment_tweaks::image::Image::save: failed to write '" + path + "'");
+  }
+}
 
 } // namespace enchantment_tweaks::image

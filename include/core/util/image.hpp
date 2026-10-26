@@ -1,7 +1,9 @@
 #pragma once
 
 #include <cstdint>
+#include <cstdlib>
 #include <string>
+#include <utility>
 #include <vector>
 
 namespace enchantment_tweaks::image {
@@ -11,11 +13,21 @@ struct Pixel {
   uint8_t g = 0;
   uint8_t b = 0;
   uint8_t a = 0;
+
+  bool operator==(const Pixel &other) const {
+    return r == other.r && g == other.g && b == other.b && a == other.a;
+  }
 };
 
 class Image {
 public:
   Image() = default;
+
+  Image(int w, int h)
+      : width_(w), height_(h), pixels_(static_cast<size_t>(w) * h * 4, 0) {}
+
+  Image(int w, int h, std::vector<uint8_t> pixels)
+      : width_(w), height_(h), pixels_(std::move(pixels)) {}
 
   static Image load(const std::string &path);
 
@@ -27,10 +39,13 @@ public:
 
   bool isOpaque(int x, int y) const;
 
-private:
-  Image(int w, int h, std::vector<uint8_t> pixels)
-      : width_(w), height_(h), pixels_(std::move(pixels)) {}
+  const std::vector<uint8_t> &pixels() const noexcept { return pixels_; }
+  std::vector<uint8_t> &pixels() noexcept { return pixels_; }
 
+  void setPixel(int x, int y, const Pixel &p);
+  void save(const std::string &path) const;
+
+private:
   int width_ = 0;
   int height_ = 0;
   std::vector<uint8_t> pixels_; // RGBA8, row-major, top-to-bottom

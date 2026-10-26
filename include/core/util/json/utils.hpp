@@ -2,6 +2,7 @@
 
 #include "libraries/nlohmann/json.hpp"
 
+#include <concepts>
 #include <optional>
 #include <stdexcept>
 #include <string>
@@ -9,7 +10,6 @@
 #include <vector>
 
 using nlohmann::json;
-
 namespace util {
 
 template <typename EnumT>
@@ -48,7 +48,13 @@ template <typename T>
 void writeOptional(json &j, const std::string &key,
                    const std::optional<T> &value) {
   if (value.has_value()) {
-    j[key] = *value;
+    if constexpr (requires(const T &item) {
+                    { item.serialize() } -> std::same_as<json>;
+                  }) {
+      j[key] = value->serialize();
+    } else {
+      j[key] = *value;
+    }
   }
 }
 

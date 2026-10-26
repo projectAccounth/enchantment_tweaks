@@ -1,5 +1,4 @@
 #include "core/api/mesh.hpp"
-#include "core/types/identifier.hpp"
 #include "core/types/mesh/types.hpp"
 
 #include <cmath>
@@ -262,8 +261,8 @@ Model MeshBuilder::build(const BuildOptions &options) const {
   }
 
   Model model;
-  const Identifier textureRef =
-      Identifier(options.textureNamespace, options.textureKey);
+  const std::string textureRef =
+      options.textureNamespace + ":" + options.textureKey;
   model.textures["particle"] = textureRef;
   if (!options.outlineOnly) {
 
@@ -287,7 +286,7 @@ Model MeshBuilder::build(const BuildOptions &options) const {
     const std::string oNamespace =
         options.outlineTextureNamespace.value_or(options.textureNamespace);
     const std::string oKey = options.outlineTextureKey.value_or("outline");
-    model.textures["outline"] = Identifier(oNamespace, oKey);
+    model.textures["outline"] = oNamespace + ":" + oKey;
 
     const auto occupied = computeOccupancy();
     appendOutlineElements(options, z1, z2, occupied, model.elements);

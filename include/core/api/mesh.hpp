@@ -3,8 +3,10 @@
 #include "core/types/mesh/types.hpp"
 #include "core/util/image.hpp"
 
+#include <map>
 #include <optional>
 #include <string>
+#include <vector>
 
 namespace enchantment_tweaks::mesh {
 
