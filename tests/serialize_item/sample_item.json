@@ -1,0 +1,144 @@
+{
+    "type": "minecraft:composite",
+    "models": [
+        {
+            "type": "minecraft:model",
+            "model": "minecraft:item/stick",
+            "transformation": {
+                "translation": [
+                    0.0,
+                    0.0,
+                    0.0
+                ],
+                "scale": [
+                    1.0,
+                    1.0,
+                    1.0
+                ],
+                "rotation": [
+                    0.0,
+                    90.0,
+                    0.0
+                ],
+                "right_rotation": [
+                    0.0,
+                    0.0,
+                    0.0
+                ]
+            },
+            "tints": [
+                {
+                    "type": "minecraft:constant",
+                    "value": [
+                        0.25,
+                        0.5,
+                        0.75
+                    ]
+                },
+                {
+                    "type": "minecraft:dye",
+                    "default": 16711680
+                },
+                {
+                    "type": "minecraft:firework",
+                    "default": 65280
+                },
+                {
+                    "type": "minecraft:grass",
+                    "temperature": 0.8,
+                    "downfall": 0.4
+                },
+                {
+                    "type": "minecraft:map_color",
+                    "default": 255
+                },
+                {
+                    "type": "minecraft:potion",
+                    "default": 8388736
+                },
+                {
+                    "type": "minecraft:team",
+                    "default": 16777215
+                },
+                {
+                    "type": "minecraft:custom_model_data",
+                    "index": 2,
+                    "default": 16711935
+                }
+            ]
+        },
+        {
+            "type": "minecraft:condition",
+            "property": "minecraft:has_component",
+            "component": "minecraft:custom_name",
+            "ignore_default": true,
+            "on_true": {
+                "type": "minecraft:empty"
+            },
+            "on_false": {
+                "type": "minecraft:bundle/selected_item"
+            }
+        },
+        {
+            "type": "minecraft:select",
+            "property": "minecraft:block_state",
+            "block_state_property": "minecraft:lit",
+            "cases": [
+                {
+                    "when": "true",
+                    "model": {
+                        "type": "minecraft:empty"
+                    }
+                },
+                {
+                    "when": [
+                        "false",
+                        "unset"
+                    ],
+                    "model": {
+                        "type": "minecraft:model",
+                        "model": "minecraft:item/stick"
+                    }
+                }
+            ],
+            "fallback": {
+                "type": "minecraft:empty"
+            }
+        },
+        {
+            "type": "minecraft:range_dispatch",
+            "property": "minecraft:time",
+            "scale": 0.5,
+            "source": "random",
+            "wobble": false,
+            "entries": [
+                {
+                    "threshold": 0.25,
+                    "model": {
+                        "type": "minecraft:empty"
+                    }
+                },
+                {
+                    "threshold": 0.75,
+                    "model": {
+                        "type": "minecraft:model",
+                        "model": "minecraft:item/stick"
+                    }
+                }
+            ],
+            "fallback": {
+                "type": "minecraft:empty"
+            }
+        },
+        {
+            "type": "minecraft:special",
+            "base": "minecraft:item/generated",
+            "model": {
+                "type": "minecraft:chest",
+                "texture": "minecraft:entity/chest/normal",
+                "chest_type": "left",
+                "openness": 0.5
+            }
+        }
+    ]
+}

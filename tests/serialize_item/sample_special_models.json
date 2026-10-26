@@ -1,0 +1,57 @@
+[
+    {
+        "type": "minecraft:banner",
+        "attachment": "wall",
+        "color": "blue"
+    },
+    {
+        "type": "minecraft:bell"
+    },
+    {
+        "type": "minecraft:book",
+        "open_angle": 0.75,
+        "page1": 0.2,
+        "page2": 0.8
+    },
+    {
+        "type": "minecraft:chest",
+        "texture": "minecraft:entity/chest/normal",
+        "chest_type": "right",
+        "openness": 0.35
+    },
+    {
+        "type": "minecraft:conduit"
+    },
+    {
+        "type": "minecraft:copper_golem_statue",
+        "pose": "running",
+        "texture": "minecraft:entity/copper_golem/copper_golem.png"
+    },
+    {
+        "type": "minecraft:decorated_pot"
+    },
+    {
+        "type": "minecraft:end_cube",
+        "effect": "portal"
+    },
+    {
+        "type": "minecraft:head",
+        "kind": "wither_skeleton",
+        "texture": "minecraft:entity/skeleton/wither_skeleton",
+        "animation": 0.5
+    },
+    {
+        "type": "minecraft:player_head"
+    },
+    {
+        "type": "minecraft:shield"
+    },
+    {
+        "type": "minecraft:shulker_box",
+        "texture": "minecraft:entity/shulker/shulker",
+        "openness": 0.4
+    },
+    {
+        "type": "minecraft:trident"
+    }
+]
