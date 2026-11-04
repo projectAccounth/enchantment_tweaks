@@ -1,4 +1,3 @@
-#define STB_IMAGE_IMPLEMENTATION
 #include "driveker_rml_renderer.h"
 #include "RmlUi/Config/Config.h"
 #include "RmlUi/Core/Colour.h"
@@ -25,7 +24,7 @@
 namespace {
 struct GpuVertex {
   float x, y;
-  std::uint8_t r, g, b, a;
+  uint8_t r, g, b, a;
   float u, v;
 };
 
@@ -47,8 +46,8 @@ constexpr char kFragmentShader[] = R"(#version 330 core
 in vec4 v_colour;
 in vec2 v_uv;
 uniform sampler2D u_texture;
-out vec4 colour;
-void main() { colour = v_colour * texture(u_texture, v_uv); })";
+out vec4 color;
+void main() { color = v_colour * texture(u_texture, v_uv); })";
 
 constexpr static driveker::VertexFormat uiVertexFormat() {
   return driveker::VertexFormat{{
@@ -137,28 +136,27 @@ DrivekerRmlRenderer::CompileGeometry(Rml::Span<const Rml::Vertex> vertices,
                       .u = v.tex_coord.x,
                       .v = v.tex_coord.y});
 
-  std::vector<std::uint32_t> packedIndices;
+  std::vector<uint32_t> packedIndices;
   packedIndices.reserve(indices.size());
   for (int i : indices) {
     if (i < 0 || static_cast<size_t>(i) >= vertices.size()) return 0;
-    packedIndices.push_back(static_cast<std::uint32_t>(i));
+    packedIndices.push_back(static_cast<uint32_t>(i));
   }
 
   const uintptr_t handle = next_handle_++;
   geometry_.emplace(
       handle,
-      Geometry{
-          .vertices =
-              device_.createBuffer({.size = sizeof(GpuVertex) * packed.size(),
-                                    .usage = driveker::BufferUsage::VERTEX},
-                                   std::as_bytes(std::span{packed})),
+      Geometry{.vertices = device_.createBuffer(
+                   {.size = sizeof(GpuVertex) * packed.size(),
+                    .usage = driveker::BufferUsage::VERTEX},
+                   std::as_bytes(std::span{packed})),
 
-          .indices = device_.createBuffer(
-              {.size = sizeof(std::uint32_t) * packedIndices.size(),
-               .usage = driveker::BufferUsage::INDEX},
-              std::as_bytes(std::span{packedIndices})),
+               .indices = device_.createBuffer(
+                   {.size = sizeof(uint32_t) * packedIndices.size(),
+                    .usage = driveker::BufferUsage::INDEX},
+                   std::as_bytes(std::span{packedIndices})),
 
-          .index_count = static_cast<std::uint32_t>(packedIndices.size())});
+               .index_count = static_cast<uint32_t>(packedIndices.size())});
   return handle;
 }
 
