@@ -40,16 +40,29 @@ jobs:
             libx11-dev libxrandr-dev libxinerama-dev libxcursor-dev libxi-dev \
             libglfw3-dev
 
+      - name: Build SDL3 (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          git clone --depth 1 --branch release-3.2.20 \
+            https://github.com/libsdl-org/SDL.git "$RUNNER_TEMP/SDL"
+          cmake -S "$RUNNER_TEMP/SDL" -B "$RUNNER_TEMP/SDL-build" -G Ninja \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_INSTALL_PREFIX="$RUNNER_TEMP/SDL-install" \
+            -DSDL_SHARED=ON -DSDL_STATIC=OFF -DSDL_TESTS=OFF -DSDL_EXAMPLES=OFF
+          cmake --build "$RUNNER_TEMP/SDL-build" --parallel 8
+          cmake --install "$RUNNER_TEMP/SDL-build"
+          echo "CMAKE_PREFIX_PATH=$RUNNER_TEMP/SDL-install" >> "$GITHUB_ENV"
+
       - name: Install dependencies (macOS)
         if: runner.os == 'macOS'
         run: |
-          brew install cmake ninja pkg-config curl libzip freetype glfw
+          brew install cmake ninja pkg-config curl libzip freetype glfw sdl3
 
       - name: Install dependencies (Windows)
         if: runner.os == 'Windows'
         run: |
           choco install cmake ninja pkgconfiglite -y
-          vcpkg install curl libzip freetype glfw3 --triplet x64-windows
+          vcpkg install curl libzip freetype glfw3 sdl3 --triplet x64-windows
 
       - name: Configure (Native)
         shell: bash
@@ -62,7 +75,7 @@ jobs:
 
       - name: Build (Native)
         run: |
-          cmake --build build_native -j4
+          cmake --build build_native -j8
 
       - name: Run Tests
         working-directory: build_native/tests
@@ -96,7 +109,7 @@ jobs:
       - name: Verify Emscripten
         run: |
           emcc --version
-          emcmake --version
+          emcmake cmake --version
 
       - name: Configure (WASM)
         run: |
@@ -104,7 +117,7 @@ jobs:
 
       - name: Build (WASM)
         run: |
-          cmake --build build_wasm -j4
+          cmake --build build_wasm -j8
 
       - name: Upload WASM artifacts
         if: always()
