@@ -27,6 +27,11 @@ struct ResourcePack {
   fs::path rootPath;
   bool isDirectory = false;
   std::vector<fs::path> searchPaths;
+  /// Resource format from version.json (0 if absent; client JARs lack
+  /// pack.mcmeta).
+  int gameResourceFormat = 0;
+  /// Game version from version.json, or empty if absent.
+  std::string gameVersion;
 };
 
 struct ModelEntry {
@@ -65,16 +70,14 @@ public:
   const std::vector<TextureEntry> &getTextures() const { return textures_; }
   const std::vector<ModelDefinitionEntry> &getDef() const { return def_; }
 
-  // Collect all model IDs referenced by item definitions (crawl the model
-  // tree). Returns namespaced IDs like "minecraft:item/bow". Bare IDs without
-  // ':' default to the "minecraft" namespace.
+  /// Collects model IDs referenced by item definitions, including nested
+  /// models. Unqualified IDs use the "minecraft" namespace.
   std::vector<std::string> collectReferencedModelIds() const;
 
-  // Load only the models whose namespaced IDs are in `modelIds`.
-  // Re-scans the pack source (zip/directory) and extracts matching models.
+  /// Loads only the requested models, re-scanning the pack source as needed.
   void loadModels(const std::vector<std::string> &modelIds);
 
-  // Set a base pack to fall back to when models aren't found in this pack.
+  /// Set a base pack to fall back to when models aren't found in this pack.
   void setBasePack(const ResourcePackLoader &basePack);
 
   std::optional<json> getModelJson(const std::string &nmsp,

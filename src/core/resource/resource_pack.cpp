@@ -41,6 +41,31 @@ using ZipStat = mz_zip_archive_file_stat;
 
 namespace enchantment_tweaks::resource {
 
+namespace {
+
+// Reads pack.mcmeta. Used for directory packs and zip packs alike. Newer
+// metadata may omit pack_format in favor of min_format, and descriptions may be
+// text objects.
+void applyPackMeta(ResourcePack &pack, const json &meta) {
+  const auto it = meta.find("pack");
+  if (it == meta.end() || !it->is_object()) {
+    return;
+  }
+  if (const auto d = it->find("description");
+      d != it->end() && d->is_string()) {
+    pack.description = d->get<std::string>();
+  }
+  if (const auto f = it->find("pack_format");
+      f != it->end() && f->is_number_integer()) {
+    pack.packFormat = f->get<int>();
+  } else if (const auto m = it->find("min_format");
+             m != it->end() && m->is_number_integer()) {
+    pack.packFormat = m->get<int>();
+  }
+}
+
+} // namespace
+
 static bool isItemTypeBuiltin(const std::string &id) {
   if (id.starts_with("builtin/")) return true;
   if (id.starts_with("minecraft:item/")) return true;
@@ -54,8 +79,9 @@ static bool isItemTypeBuiltin(const std::string &id) {
 
 using json = nlohmann::json;
 
-ResourcePackLoader::ResourcePackLoader(const fs::path &packRoot)
-    : pack_{.name = "", .rootPath = packRoot} {}
+ResourcePackLoader::ResourcePackLoader(const fs::path &packRoot) {
+  pack_.rootPath = packRoot;
+}
 
 void ResourcePackLoader::setBasePack(const ResourcePackLoader &basePack) {
   basePack_ = &basePack;
@@ -84,11 +110,8 @@ bool ResourcePackLoader::loadFromDirectory(const fs::path &dir) {
     try {
       std::ifstream f(packMeta);
 
-      json meta = json::parse(f);
-      if (meta.contains("pack")) {
-        pack_.description = meta["pack"].value("description", "");
-        pack_.packFormat = meta["pack"].value("pack_format", 0);
-      }
+      const json meta = json::parse(f);
+      applyPackMeta(pack_, meta);
     } catch (const std::exception &e) {
       debug::Logger::error() << "error reading file metadata: " << packMeta;
       debug::Logger::error() << "error info: " << e.what();
@@ -127,7 +150,9 @@ bool ResourcePackLoader::loadFromDirectory(const fs::path &dir) {
                                .lexically_relative(modelsDir)
                                .replace_extension("")
                                .generic_string();
-        std::string fullId = ns + ":" + name;
+        std::string fullId = ns;
+        fullId += ':';
+        fullId += name;
         if (!idSet.count(fullId)) continue;
         try {
           std::ifstream f(entry.path());
@@ -136,7 +161,8 @@ bool ResourcePackLoader::loadFromDirectory(const fs::path &dir) {
                              .nmsp_ = ns,
                              .name = std::move(name),
                              .rawJson = std::move(j)});
-        } catch (...) {
+        } catch (const std::exception &error) {
+          debug::Logger::warning() << "skipped an unreadable model: " << error.what();
         }
       }
     }
@@ -189,6 +215,56 @@ bool ResourcePackLoader::loadFromZip(const fs::path &zipPath) {
     std::string name(ZIP_STAT_FILENAME(stat));
     if (name.empty() || name.back() == '/')
       continue; // is nothing or is a directory
+
+    if (name == "version.json") {
+      size_t versionSize = 0;
+      void *versionData = ZIP_READER_EXTRACT_TO_HEAP(zip, i, &versionSize, 0);
+      if (versionData) {
+        try {
+          const json version =
+              json::parse(static_cast<const char *>(versionData),
+                          static_cast<const char *>(versionData) + versionSize);
+          if (const auto id = version.find("id");
+              id != version.end() && id->is_string()) {
+            pack_.gameVersion = id->get<std::string>();
+          }
+          // 1.21.x writes pack_version.resource; 26.x writes resource_major.
+          if (const auto pv = version.find("pack_version");
+              pv != version.end() && pv->is_object()) {
+            if (const auto r = pv->find("resource");
+                r != pv->end() && r->is_number_integer()) {
+              pack_.gameResourceFormat = r->get<int>();
+            } else if (const auto rm = pv->find("resource_major");
+                       rm != pv->end() && rm->is_number_integer()) {
+              pack_.gameResourceFormat = rm->get<int>();
+            }
+          }
+        } catch (const std::exception &e) {
+          debug::Logger::error() << "error reading version.json in " << zipPath
+                                 << ": " << e.what();
+        }
+        ZIP_FREE(versionData);
+      }
+      continue;
+    }
+
+    if (name == "pack.mcmeta") {
+      size_t metaSize = 0;
+      void *metaData = ZIP_READER_EXTRACT_TO_HEAP(zip, i, &metaSize, 0);
+      if (metaData) {
+        try {
+          const json meta =
+              json::parse(static_cast<const char *>(metaData),
+                          static_cast<const char *>(metaData) + metaSize);
+          applyPackMeta(pack_, meta);
+        } catch (const std::exception &e) {
+          debug::Logger::error()
+              << "error reading pack.mcmeta in " << zipPath << ": " << e.what();
+        }
+        ZIP_FREE(metaData);
+      }
+      continue;
+    }
 
     if (!name.starts_with("assets/")) continue; // bandaid
 
@@ -430,7 +506,8 @@ void ResourcePackLoader::scanTextures(const fs::path &texturesDir,
                              .width = img.width(),
                              .height = img.height()});
       }
-    } catch (...) {
+    } catch (const std::exception &error) {
+      debug::Logger::warning() << "skipped an unreadable texture: " << error.what();
     }
   }
 }
@@ -527,7 +604,9 @@ void ResourcePackLoader::loadModels(const std::vector<std::string> &modelIds) {
                                .lexically_relative(modelsDir)
                                .replace_extension("")
                                .generic_string();
-        std::string fullId = ns + ":" + name;
+        std::string fullId = ns;
+        fullId += ':';
+        fullId += name;
         if (!idSet.count(fullId)) continue;
         // Avoid duplicates
         if (modelIndex_.count(fullId)) continue;
@@ -538,7 +617,8 @@ void ResourcePackLoader::loadModels(const std::vector<std::string> &modelIds) {
                              .nmsp_ = ns,
                              .name = std::move(name),
                              .rawJson = std::move(j)});
-        } catch (...) {
+        } catch (const std::exception &error) {
+          debug::Logger::warning() << "skipped an unreadable model: " << error.what();
         }
       }
     }
