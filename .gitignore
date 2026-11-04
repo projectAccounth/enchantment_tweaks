@@ -2,8 +2,14 @@
 build/
 build-native/
 build-wasm/
+build_native/
+build_wasm/
 
 # workspace files
 .cache/
 .clangd
 .vscode/
+
+# extra files
+*.zip
+!tests/**/*.zip

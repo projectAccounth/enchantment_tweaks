@@ -16,7 +16,9 @@ endif()
 file(GLOB_RECURSE CORE_SOURCES CONFIGURE_DEPENDS "src/core/*.cpp")
 
 # Core library
-add_library(enchantment_tweaks_core ${CORE_SOURCES})
+# stb_image is implemented once, here, so every consumer of the core library
+# (native app, wasm, tests) can load and save images.
+add_library(enchantment_tweaks_core ${CORE_SOURCES} ${CMAKE_SOURCE_DIR}/src/libraries/stb_image_impl.cpp)
 target_include_directories(enchantment_tweaks_core PUBLIC include)
 
 # Compile miniz for ZIP handling (used by both native and WASM)
@@ -67,27 +69,45 @@ if(NOT EMSCRIPTEN)
         FetchContent_MakeAvailable(curl)
     endif()
 
-    find_package(Driveker 0.1 CONFIG REQUIRED)
+    find_package(Driveker 0.2.0 CONFIG REQUIRED)
+    if(NOT TARGET Driveker::GL)
+        message(FATAL_ERROR
+            "The installed Driveker has no GL module (Driveker::GL). ")
+    endif()
     find_package(SDL3 CONFIG REQUIRED COMPONENTS SDL3-shared)
 
-    file(GLOB_RECURSE SEL_SRC_FILES CONFIGURE_DEPENDS "apps/native/selector/*.cpp")
+    file(GLOB_RECURSE SEL_SRC_FILES CONFIGURE_DEPENDS "apps/native/app/*.cpp")
 
-    add_library(enchantment_tweaks_selector STATIC ${SEL_SRC_FILES})
-    target_include_directories(enchantment_tweaks_selector
+    add_library(et_native STATIC ${SEL_SRC_FILES})
+    target_include_directories(et_native
         PUBLIC ${CMAKE_SOURCE_DIR}/apps/native
         PRIVATE ${CMAKE_SOURCE_DIR}/include
     )
 
-    add_executable(native apps/native/main.cpp)
-    target_include_directories(native PRIVATE ${CMAKE_SOURCE_DIR}/apps/native)
-    target_link_libraries(native PRIVATE enchantment_tweaks_core enchantment_tweaks_selector curl)
+    set(NFD_INSTALL OFF CACHE BOOL "" FORCE)
+    set(NFD_BUILD_TESTS OFF CACHE BOOL "" FORCE)
+    # Wayland only tags the dialog's parent window, the gtk dialog itself works without it
+    set(NFD_WAYLAND OFF CACHE BOOL "" FORCE)
+    FetchContent_Declare(
+        nfd
+        GIT_REPOSITORY https://github.com/btzy/nativefiledialog-extended.git
+        GIT_TAG v1.4.1
+        GIT_SHALLOW TRUE
+        GIT_SUBMODULES ""   # tests
+    )
+    FetchContent_MakeAvailable(nfd)
+    target_link_libraries(et_native PRIVATE nfd enchantment_tweaks_core curl)
+
+    add_executable(enchantment_tweaks_native apps/native/main.cpp)
+    target_include_directories(enchantment_tweaks_native PRIVATE ${CMAKE_SOURCE_DIR}/apps/native)
+    target_link_libraries(enchantment_tweaks_native PRIVATE enchantment_tweaks_core et_native curl)
 
     # windows pops a console window if one is not a Win32 graphical executable
     if(WIN32)
-        set_target_properties(native PROPERTIES WIN32_EXECUTABLE TRUE)
+        set_target_properties(enchantment_tweaks_native PROPERTIES WIN32_EXECUTABLE TRUE)
     endif()
 
-    set_target_properties(native PROPERTIES
+    set_target_properties(enchantment_tweaks_native PROPERTIES
         RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin"
     )
 
@@ -99,18 +119,21 @@ if(NOT EMSCRIPTEN)
     set(RMLUI_SAMPLES OFF CACHE INTERNAL "")
     set(RMLUI_BUILD_TESTS OFF CACHE INTERNAL "")
     FetchContent_MakeAvailable(rmlui)
-    target_sources(enchantment_tweaks_selector PRIVATE
+    target_sources(et_native PRIVATE
         "${rmlui_SOURCE_DIR}/Backends/RmlUi_Platform_SDL.cpp"
     )
-    target_include_directories(enchantment_tweaks_selector PRIVATE "${rmlui_SOURCE_DIR}/Backends")
-    target_compile_definitions(enchantment_tweaks_selector PRIVATE RMLUI_SDL_VERSION_MAJOR=3)
-    target_link_libraries(enchantment_tweaks_selector PUBLIC RmlUi::Core Driveker::GL SDL3::SDL3-shared)
+    target_include_directories(et_native PRIVATE "${rmlui_SOURCE_DIR}/Backends")
+    target_compile_definitions(et_native PRIVATE RMLUI_SDL_VERSION_MAJOR=3)
+    target_link_libraries(et_native PUBLIC RmlUi::Core Driveker::GL SDL3::SDL3-shared)
 
-    # Make the selector usable from the default native binary working directory.
-    add_custom_command(TARGET native POST_BUILD
+    add_executable(ui_snapshot apps/native/tools/ui_snapshot.cpp apps/native/tools/soft_renderer.cpp)
+    target_include_directories(ui_snapshot PRIVATE ${CMAKE_SOURCE_DIR}/apps/native ${CMAKE_SOURCE_DIR}/include/libraries)
+    target_link_libraries(ui_snapshot PRIVATE et_native enchantment_tweaks_core RmlUi::Core)
+
+    add_custom_command(TARGET enchantment_tweaks_native POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy_directory
-            "${CMAKE_SOURCE_DIR}/apps/native/selector/assets"
-            "$<TARGET_FILE_DIR:native>/selector-assets"
+            "${CMAKE_SOURCE_DIR}/apps/native/app/assets"
+            "$<TARGET_FILE_DIR:enchantment_tweaks_native>/assets"
     )
 endif()
 

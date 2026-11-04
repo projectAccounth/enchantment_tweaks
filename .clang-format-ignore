@@ -1,2 +1,5 @@
 # Dependencies
 include/libraries
+src/libraries
+tests/test_libs
+tests/assets
