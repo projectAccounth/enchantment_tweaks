@@ -14,11 +14,13 @@
 #include <driveker/core/texture.hpp>
 
 #include <cstdint>
+#include <filesystem>
 #include <unordered_map>
 
 class DrivekerRmlRenderer final : public Rml::RenderInterface {
 public:
-  DrivekerRmlRenderer(int width, int height);
+  DrivekerRmlRenderer(int width, int height,
+                      const std::filesystem::path &assets_directory);
   ~DrivekerRmlRenderer() override;
 
   void SetViewport(int width, int height);

@@ -18,7 +18,11 @@
 #include <algorithm>
 #include <array>
 #include <cstdint>
+#include <fstream>
+#include <iterator>
+#include <stdexcept>
 #include <span>
+#include <string>
 #include <vector>
 
 namespace {
@@ -28,26 +32,19 @@ struct GpuVertex {
   float u, v;
 };
 
-constexpr char kVertexShader[] = R"(#version 330 core
-layout(location = 0) in vec2 a_position;
-layout(location = 1) in vec4 a_colour;
-layout(location = 2) in vec2 a_uv;
-uniform vec2 u_translation;
-uniform vec2 u_viewport;
-out vec4 v_colour;
-out vec2 v_uv;
-void main() {
-  vec2 p = a_position + u_translation;
-  gl_Position = vec4(p.x / u_viewport.x * 2.0 - 1.0, 1.0 - p.y / u_viewport.y * 2.0, 0.0, 1.0);
-  v_colour = a_colour;
-  v_uv = a_uv;
-})";
-constexpr char kFragmentShader[] = R"(#version 330 core
-in vec4 v_colour;
-in vec2 v_uv;
-uniform sampler2D u_texture;
-out vec4 color;
-void main() { color = v_colour * texture(u_texture, v_uv); })";
+std::string loadShader(const std::filesystem::path &path) {
+  std::ifstream file(path, std::ios::binary);
+  if (!file)
+    throw std::runtime_error("Could not open shader file: " + path.string());
+
+  std::string source((std::istreambuf_iterator<char>(file)),
+                     std::istreambuf_iterator<char>{});
+  if (file.bad())
+    throw std::runtime_error("Could not read shader file: " + path.string());
+  if (source.empty())
+    throw std::runtime_error("Shader file is empty: " + path.string());
+  return source;
+}
 
 constexpr static driveker::VertexFormat uiVertexFormat() {
   return driveker::VertexFormat{{
@@ -70,14 +67,19 @@ std::vector<Rml::byte> premultiply(Rml::Span<const Rml::byte> rgba) {
 }
 } // namespace
 
-DrivekerRmlRenderer::DrivekerRmlRenderer(int width, int height)
+DrivekerRmlRenderer::DrivekerRmlRenderer(
+    int width, int height, const std::filesystem::path &assets_directory)
     : device_(driveker::RenderSystem::getDevice()), width_(width),
       height_(height) {
+  const auto vertexShader = assets_directory / "shaders" / "ui.vert";
+  const auto fragmentShader = assets_directory / "shaders" / "ui.frag";
+  const auto vertexSource = loadShader(vertexShader);
+  const auto fragmentSource = loadShader(fragmentShader);
   const auto shader = driveker::ShaderProgramDesc{
-      .vertexSource = kVertexShader,
-      .fragmentSource = kFragmentShader,
-      .vertexSourceName = "RmlUi Driveker vertex shader",
-      .fragmentSourceName = "RmlUi Driveker fragment shader"};
+      .vertexSource = vertexSource,
+      .fragmentSource = fragmentSource,
+      .vertexSourceName = vertexShader.string(),
+      .fragmentSourceName = fragmentShader.string()};
   pipeline_ = device_.createPipeline(
       driveker::PipelineDesc::builder(shader)
           .vertexFormat(uiVertexFormat())

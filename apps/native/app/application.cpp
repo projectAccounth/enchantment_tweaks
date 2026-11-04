@@ -1030,7 +1030,8 @@ bool Application::init() {
 
   driveker::initializeGLRenderSystem();
 
-  resource_.renderer = std::make_unique<DrivekerRmlRenderer>(width, height);
+  resource_.renderer = std::make_unique<DrivekerRmlRenderer>(
+      width, height, impl_->config_.assets_directory);
 
   return true;
 }
