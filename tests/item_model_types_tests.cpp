@@ -13,18 +13,9 @@ using namespace enchantment_tweaks::item;
 using nlohmann::json;
 
 int main() {
-  size_t passed = 0;
-  size_t total = 0;
-  auto run = [&](const std::string &name, auto &&fn) {
-    ++total;
-    if (test_util::runCase(name, std::forward<decltype(fn)>(fn))) {
-      ++passed;
-    }
-  };
+  test_util::Suite suite;
 
-  test_util::begin();
-
-  run("item model type enums", [] {
+  suite.run("item model type enums", [] {
     test_util::check(itemModelTypeFromString("minecraft:model") ==
                          ItemModelType::Model,
                      "model type mismatch");
@@ -39,7 +30,7 @@ int main() {
                      "toString mismatch");
   });
 
-  run("boolean property enums including on_shelf", [] {
+  suite.run("boolean property enums including on_shelf", [] {
     auto p1 = booleanPropertyTypeFromString("minecraft:on_shelf");
     test_util::check(p1 == BooleanPropertyType::OnShelf,
                      "on_shelf namespaced mismatch");
@@ -51,7 +42,7 @@ int main() {
                      "toString broken mismatch");
   });
 
-  run("select and numeric property enums", [] {
+  suite.run("select and numeric property enums", [] {
     test_util::check(
         selectPropertyTypeFromString("minecraft:display_context") ==
             SelectPropertyType::DisplayContext,
@@ -64,7 +55,7 @@ int main() {
                      "use_duration mismatch");
   });
 
-  run("model item model create/serialize", [] {
+  suite.run("model item model create/serialize", [] {
     json j = {{"type", "minecraft:model"}, {"model", "minecraft:item/stone"}};
     auto m = ItemModel::create(j);
     test_util::check(m != nullptr, "model should be created");
@@ -73,7 +64,7 @@ int main() {
     test_util::check(s["model"] == "minecraft:item/stone", "model mismatch");
   });
 
-  run("empty item model", [] {
+  suite.run("empty item model", [] {
     json j = {{"type", "minecraft:empty"}};
     auto m = ItemModel::create(j);
     test_util::check(m != nullptr, "empty model should be created");
@@ -81,7 +72,7 @@ int main() {
     test_util::check(s["type"] == "minecraft:empty", "type mismatch");
   });
 
-  run("item model definition roundtrip", [] {
+  suite.run("item model definition roundtrip", [] {
     json j = {
         {"model",
          {{"type", "minecraft:model"}, {"model", "minecraft:item/diamond"}}}};
@@ -93,8 +84,5 @@ int main() {
                      "nested type mismatch");
   });
 
-  debug::Logger::info() << "[summary] " << passed << "/" << total
-                        << " tests passed\n";
-  test_util::end();
-  return passed == total ? 0 : 1;
+  return suite.finish();
 }

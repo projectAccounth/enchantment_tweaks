@@ -68,6 +68,15 @@ void MeshBuilder::appendPerPixelElements(const BuildOptions &options, double z1,
   auto uvX = [&](int px) { return rnd6(px * scaleX); };
   auto uvY = [&](int py) { return rnd6(py * scaleY); };
 
+  // A side face between two opaque pixels is inside the solid and can never be
+  // seen, so it is not written. Only the sprite faces (north, south) are
+  // written for every opaque pixel, and a side face only where the neighbor is
+  // transparent. This does not change the rendering. Saves space.
+  const auto opaqueAt = [&](int col, int row) {
+    if (col < 0 || row < 0 || col >= w || row >= h) return false;
+    return image_.isOpaque(col, row);
+  };
+
   for (int row = 0; row < h; ++row) {
     for (int col = 0; col < w; ++col) {
       if (options.cullTransparent && !image_.isOpaque(col, row)) continue;
@@ -87,8 +96,23 @@ void MeshBuilder::appendPerPixelElements(const BuildOptions &options, double z1,
       const Uv uvWest{u1, v1, u2, v2};
       const Uv uvEast{u1, v1, u2, v2};
 
-      auto el = makeElement(mx1, my1, z1, mx2, my2, z2, uvN, uvS, uvUp, uvDown,
-                            uvWest, uvEast, "#texture");
+      const bool cull = options.cullTransparent;
+      const std::optional<Uv> up = (!cull || !opaqueAt(col, row - 1))
+                                       ? std::optional<Uv>(uvUp)
+                                       : std::nullopt;
+      const std::optional<Uv> down = (!cull || !opaqueAt(col, row + 1))
+                                         ? std::optional<Uv>(uvDown)
+                                         : std::nullopt;
+      const std::optional<Uv> west = (!cull || !opaqueAt(col - 1, row))
+                                         ? std::optional<Uv>(uvWest)
+                                         : std::nullopt;
+      const std::optional<Uv> east = (!cull || !opaqueAt(col + 1, row))
+                                         ? std::optional<Uv>(uvEast)
+                                         : std::nullopt;
+
+      auto el =
+          makeElement(mx1, my1, z1, mx2, my2, z2, std::optional<Uv>(uvN),
+                      std::optional<Uv>(uvS), up, down, west, east, "#texture");
       if (el) out.push_back(std::move(*el));
     }
   }

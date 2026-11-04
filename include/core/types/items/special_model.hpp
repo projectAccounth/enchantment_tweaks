@@ -27,8 +27,7 @@ enum class SpecialModelType : uint8_t {
   Trident,
 };
 
-// what the fuck did I just do
-// a near-complete mirror of the specified schema
+/// Mirrors Minecraft's special model schema.
 const EnumTable<SpecialModelType> &specialModelTypeTable();
 std::string toString(SpecialModelType t);
 SpecialModelType specialModelTypeFromString(const std::string &s);
@@ -87,8 +86,6 @@ enum class EndCubeEffect : uint8_t { Gateway, Portal };
 const EnumTable<EndCubeEffect> &endCubeEffectTable();
 std::string toString(EndCubeEffect t);
 EndCubeEffect endCubeEffectFromString(const std::string &s);
-
-// SpecialModel hierarchy
 
 class SpecialModel : public JsonSerializable {
 public:

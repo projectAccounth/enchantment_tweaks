@@ -201,13 +201,13 @@ void ConditionItemModel::serializeBody(json &j) const {
     break;
   case BooleanPropertyType::HasComponent:
     writeOptional(j, "component", component);
-    if (ignoreDefault.value_or(false)) j["ignore_default"] = *ignoreDefault;
+    if (ignoreDefault && *ignoreDefault) j["ignore_default"] = true;
     break;
   case BooleanPropertyType::KeybindDown:
     writeOptional(j, "keybind", keybind);
     break;
   case BooleanPropertyType::CustomModelData:
-    if (index.value_or(0) != 0) j["index"] = *index;
+    if (index && *index != 0) j["index"] = *index;
     break;
   default:
     break;
@@ -278,7 +278,7 @@ void SelectItemModel::serializeBody(json &j) const {
     writeOptional(j, "pattern", pattern);
     break;
   case SelectPropertyType::CustomModelData:
-    if (index.value_or(0) != 0) j["index"] = *index;
+    if (index && *index != 0) j["index"] = *index;
     break;
   default:
     break;
@@ -341,24 +341,24 @@ void RangeDispatchItemModel::serializeBody(json &j) const {
   switch (property) {
   case NumericPropertyType::Count:
   case NumericPropertyType::Damage:
-    if (!normalize.value_or(true)) j["normalize"] = *normalize;
+    if (normalize && !*normalize) j["normalize"] = false;
     break;
   case NumericPropertyType::Compass:
     if (target.has_value()) j["target"] = toString(*target);
-    if (!wobble.value_or(true)) j["wobble"] = *wobble;
+    if (wobble && !*wobble) j["wobble"] = false;
     break;
   case NumericPropertyType::Time:
     if (source.has_value()) j["source"] = toString(*source);
-    if (!wobble.value_or(true)) j["wobble"] = *wobble;
+    if (wobble && !*wobble) j["wobble"] = false;
     break;
   case NumericPropertyType::UseCycle:
-    if (period.value_or(1.0) != 1.0) j["period"] = *period;
+    if (period && *period != 1.0) j["period"] = *period;
     break;
   case NumericPropertyType::UseDuration:
-    if (remaining.value_or(false)) j["remaining"] = *remaining;
+    if (remaining && *remaining) j["remaining"] = true;
     break;
   case NumericPropertyType::CustomModelData:
-    if (index.value_or(0) != 0) j["index"] = *index;
+    if (index && *index != 0) j["index"] = *index;
     break;
   default:
     break;

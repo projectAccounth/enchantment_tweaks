@@ -86,28 +86,19 @@ const EnumTable<NumericPropertyType> &numericPropertyTypeTable();
 std::string toString(NumericPropertyType t);
 NumericPropertyType numericPropertyTypeFromString(const std::string &s);
 
-// range_dispatch / time : "source" field
+/// Sources for the time range-dispatch property.
 enum class TimeSource : uint8_t { Daytime, MoonPhase, Random };
 const EnumTable<TimeSource> &timeSourceTable();
 std::string toString(TimeSource t);
 TimeSource timeSourceFromString(const std::string &s);
 
-// range_dispatch / compass : "target" field
+/// Targets for the compass range-dispatch property.
 enum class CompassTarget : uint8_t { Spawn, Lodestone, Recovery, None };
 const EnumTable<CompassTarget> &compassTargetTable();
 std::string toString(CompassTarget t);
 CompassTarget compassTargetFromString(const std::string &s);
 
-// Documented, but represented as plain strings rather than enums because
-// they only ever appear as `select` case values (i.e. free-form matched
-// strings), never as a struct field of their own:
-//   charge_type values:      none | rocket | arrow
-//   display_context values:  none | thirdperson_lefthand |
-//   thirdperson_righthand |
-//                            firstperson_lefthand | firstperson_righthand |
-//                            head | gui | ground | fixed | on_shelf
-//   main_hand values:        left | right
-
+// Select properties remain strings because they only appear as case values.
 class ItemModel : public JsonSerializable {
 public:
   explicit ItemModel(ItemModelType type) : type_(type) {}
@@ -132,8 +123,6 @@ private:
   ItemModelType type_;
 };
 
-// --- model ---------------------------------------------------------------
-
 class ModelItemModel final : public ItemModel {
 public:
   ModelItemModel() : ItemModel(ItemModelType::Model) {}
@@ -146,8 +135,6 @@ protected:
   void deserializeBody(const json &j) override;
 };
 
-// --- composite -------------------------------------------------------------
-
 class CompositeItemModel final : public ItemModel {
 public:
   CompositeItemModel() : ItemModel(ItemModelType::Composite) {}
@@ -159,26 +146,23 @@ protected:
   void deserializeBody(const json &j) override;
 };
 
-// --- condition ---------------------------------------------------------
-
-// Holds the (small) union of "additional fields" used by the various
-// boolean property types. Only the members relevant to `property` are
-// populated / serialized; see the wiki table under "Boolean property types".
+/// Additional fields used by boolean properties; only fields relevant to
+/// `property` are populated and serialized.
 class ConditionItemModel final : public ItemModel {
 public:
   ConditionItemModel() : ItemModel(ItemModelType::Condition) {}
 
   BooleanPropertyType property = BooleanPropertyType::Selected;
 
-  // minecraft:component
+  /// minecraft:component
   std::optional<std::string> predicate;
   std::optional<json> value;
-  // minecraft:has_component
+  /// minecraft:has_component
   std::optional<std::string> component;
   std::optional<bool> ignoreDefault; // default false
-  // minecraft:keybind_down
+  /// minecraft:keybind_down
   std::optional<std::string> keybind;
-  // minecraft:custom_model_data
+  /// minecraft:custom_model_data
   std::optional<int> index; // default 0
 
   std::unique_ptr<ItemModel> onTrue;
@@ -188,8 +172,6 @@ protected:
   void serializeBody(json &j) const override;
   void deserializeBody(const json &j) override;
 };
-
-// --- select --------------------------------------------------------------
 
 struct SelectCase final : public JsonSerializable {
   std::vector<std::string> when; // one entry serializes as a bare string
@@ -205,15 +187,15 @@ public:
 
   SelectPropertyType property = SelectPropertyType::MainHand;
 
-  // minecraft:block_state
+  /// minecraft:block_state
   std::optional<std::string> blockStateProperty;
-  // minecraft:component
+  /// minecraft:component
   std::optional<std::string> component;
-  // minecraft:local_time
+  /// minecraft:local_time
   std::optional<std::string> locale;   // default ""
   std::optional<std::string> timeZone; // optional
   std::optional<std::string> pattern;  // required for local_time
-  // minecraft:custom_model_data
+  /// minecraft:custom_model_data
   std::optional<int> index; // default 0
 
   std::vector<SelectCase> cases;
@@ -223,8 +205,6 @@ protected:
   void serializeBody(json &j) const override;
   void deserializeBody(const json &j) override;
 };
-
-// range_dispatch
 
 struct RangeDispatchEntry final : public JsonSerializable {
   double threshold = 0.0;
@@ -241,18 +221,18 @@ public:
   NumericPropertyType property = NumericPropertyType::Damage;
   double scale = 1.0; // optional, default 1.0
 
-  // minecraft:count / minecraft:damage
+  /// minecraft:count / minecraft:damage
   std::optional<bool> normalize; // default true
-  // minecraft:compass
+  /// minecraft:compass
   std::optional<CompassTarget> target;
   std::optional<bool> wobble; // default true (compass & time)
-  // minecraft:time
+  /// minecraft:time
   std::optional<TimeSource> source;
-  // minecraft:use_cycle
+  /// minecraft:use_cycle
   std::optional<double> period; // default 1.0
-  // minecraft:use_duration
+  /// minecraft:use_duration
   std::optional<bool> remaining; // default false
-  // minecraft:custom_model_data
+  /// minecraft:custom_model_data
   std::optional<int> index; // default 0
 
   std::vector<RangeDispatchEntry> entries;
@@ -262,8 +242,6 @@ protected:
   void serializeBody(json &j) const override;
   void deserializeBody(const json &j) override;
 };
-
-// --- empty / bundle/selected_item ------------------------------------------
 
 class EmptyItemModel final : public ItemModel {
 public:
@@ -283,8 +261,6 @@ protected:
   void serializeBody(json &j) const override;
   void deserializeBody(const json &j) override;
 };
-
-// --- special ---------------------------------------------------------------
 
 class SpecialItemModel final : public ItemModel {
 public:

@@ -56,7 +56,7 @@ protected:
   void deserializeBody(const json &j) override;
 };
 
-// Shared for dye / firework / map_color / potion / team
+/// Shared for dye / firework / map_color / potion / team
 class DefaultColorTintSource : public TintSource {
 public:
   explicit DefaultColorTintSource(TintSourceType type) : TintSource(type) {}

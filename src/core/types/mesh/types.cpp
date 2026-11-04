@@ -1,5 +1,6 @@
 #include "core/types/mesh/types.hpp"
 #include "core/types/common.hpp"
+#include "core/util/debug.hpp"
 #include "core/util/json/utils.hpp"
 #include <map>
 #include <string>
@@ -17,6 +18,7 @@ const EnumTable<DisplayTransformType> &displayTransformTypeTable() {
       {DisplayTransformType::Gui, "gui"},
       {DisplayTransformType::Head, "head"},
       {DisplayTransformType::Fixed, "fixed"},
+      {DisplayTransformType::OnShelf, "on_shelf"},
   };
   return table;
 }
@@ -170,7 +172,13 @@ json Model::serialize() const {
   if (!textures.empty()) {
     json texturesJson = json::object();
     for (const auto &entry : textures) {
-      texturesJson[entry.first] = entry.second;
+      const auto flag = forceTranslucent.find(entry.first);
+      if (flag != forceTranslucent.end() && flag->second) {
+        texturesJson[entry.first] = {{"sprite", entry.second},
+                                     {"force_translucent", true}};
+      } else {
+        texturesJson[entry.first] = entry.second;
+      }
     }
     j["textures"] = std::move(texturesJson);
   }
@@ -199,9 +207,18 @@ void Model::deserialize(const json &j) {
     guiLight.reset();
   }
   textures.clear();
+  forceTranslucent.clear();
   if (j.contains("textures")) {
     for (const auto &entry : j.at("textures").items()) {
-      textures[entry.key()] = entry.value().get<std::string>();
+      const auto &value = entry.value();
+      if (value.is_object()) {
+        textures[entry.key()] = value.at("sprite").get<std::string>();
+        if (value.value("force_translucent", false)) {
+          forceTranslucent[entry.key()] = true;
+        }
+      } else {
+        textures[entry.key()] = value.get<std::string>();
+      }
     }
   }
   elements.clear();
@@ -215,10 +232,17 @@ void Model::deserialize(const json &j) {
   display.clear();
   if (j.contains("display")) {
     for (const auto &entry : j.at("display").items()) {
-      DisplayTransform transform;
-      transform.deserialize(entry.value());
-      display.emplace(displayTransformTypeFromString(entry.key()),
-                      std::move(transform));
+      try {
+        const auto type = displayTransformTypeFromString(entry.key());
+        DisplayTransform transform;
+        transform.deserialize(entry.value());
+        display.emplace(type, std::move(transform));
+      } catch (const std::invalid_argument &) {
+        // Mojang adds display contexts over time; one unknown key must not
+        // invalidate the whole model.
+        debug::Logger::warning()
+            << "skipping unknown display context '" << entry.key() << "'";
+      }
     }
   }
 }

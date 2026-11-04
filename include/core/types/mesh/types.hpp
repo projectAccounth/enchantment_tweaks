@@ -22,6 +22,7 @@ enum class DisplayTransformType : uint8_t {
   Gui,
   Head,
   Fixed,
+  OnShelf,
 };
 
 const EnumTable<DisplayTransformType> &displayTransformTypeTable();
@@ -47,7 +48,7 @@ const EnumTable<GuiLight> &guiLightTable();
 std::string toString(GuiLight t);
 GuiLight guiLightFromString(const std::string &s);
 
-// [uFrom, vFrom, uTo, vTo].
+/// [uFrom, vFrom, uTo, vTo].
 struct Uv final : public JsonSerializable {
   Uv() = default;
   Uv(double uFrom, double vFrom, double uTo, double vTo);
@@ -61,7 +62,7 @@ struct Uv final : public JsonSerializable {
   void deserialize(const json &j) override;
 };
 
-// One face of a cuboid element.
+/// One face of a cuboid element.
 struct Face final : public JsonSerializable {
   Face() = default;
   Face(Uv uv, std::string texture);
@@ -75,7 +76,7 @@ struct Face final : public JsonSerializable {
   void deserialize(const json &j) override;
 };
 
-// One cuboid element of the model, from `from` to `to`, with up to six faces.
+/// One cuboid element of the model, from `from` to `to`, with up to six faces.
 struct Element final : public JsonSerializable {
   Element() = default;
   Element(Vec3 from, Vec3 to, std::map<FaceDirection, Face> faces);
@@ -103,6 +104,9 @@ struct Model final : public JsonSerializable {
   std::map<std::string, std::string>
       textures; // "texture variable" -> id or ref, e.g. "particle" -> "ns:key"
                 // or "#north"
+  /// Entries written in the object form {"sprite": ..., "force_translucent":
+  /// ...} keep their flag here, keyed by the same variable name as `textures`.
+  std::map<std::string, bool> forceTranslucent;
   std::vector<Element> elements;
   std::map<DisplayTransformType, DisplayTransform> display;
 

@@ -28,7 +28,7 @@ struct BuildOptions {
   std::map<DisplayTransformType, DisplayTransform> overrideTransforms;
 };
 
-// one per img
+/// Builds a model from an image.
 class MeshBuilder {
 public:
   explicit MeshBuilder(const image::Image &img);

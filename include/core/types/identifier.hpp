@@ -1,6 +1,6 @@
 #pragma once
 
-// a mirror of minecraft's resourcelocation impl
+// Mirrors Minecraft's resource-location format.
 
 #include "core/util/string.hpp"
 

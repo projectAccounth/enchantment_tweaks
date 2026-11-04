@@ -118,7 +118,8 @@ JsBuildOptions jsBuildOptionsFromJson(const std::string &jsonStr) {
     for (const auto &entry : j.at("overrideTransforms").items()) {
       DisplayTransform transform;
       transform.deserialize(entry.value());
-      options.overrideTransforms.emplace_back(entry.key(), std::move(transform));
+      options.overrideTransforms.emplace_back(entry.key(),
+                                              std::move(transform));
     }
   }
   return options;
@@ -345,7 +346,8 @@ EMSCRIPTEN_BINDINGS(enchantment_tweaks) {
       .value("Ground", DisplayTransformType::Ground)
       .value("Gui", DisplayTransformType::Gui)
       .value("Head", DisplayTransformType::Head)
-      .value("Fixed", DisplayTransformType::Fixed);
+      .value("Fixed", DisplayTransformType::Fixed)
+      .value("OnShelf", DisplayTransformType::OnShelf);
 
   emscripten::enum_<FaceDirection>("FaceDirection")
       .value("North", FaceDirection::North)

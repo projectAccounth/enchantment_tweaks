@@ -13,18 +13,9 @@ using namespace enchantment_tweaks::mesh;
 using nlohmann::json;
 
 int main() {
-  size_t passed = 0;
-  size_t total = 0;
-  auto run = [&](const std::string &name, auto &&fn) {
-    ++total;
-    if (test_util::runCase(name, std::forward<decltype(fn)>(fn))) {
-      ++passed;
-    }
-  };
+  test_util::Suite suite;
 
-  test_util::begin();
-
-  run("uv serialize/deserialize", [] {
+  suite.run("uv serialize/deserialize", [] {
     Uv uv(0, 0, 16, 16);
     json j = uv.serialize();
     test_util::check(j.is_array() && j.size() == 4, "uv should be array of 4");
@@ -33,7 +24,7 @@ int main() {
     test_util::check(uv2.uFrom == 0 && uv2.uTo == 16, "uv values mismatch");
   });
 
-  run("face serialize/deserialize with cullface and rotation", [] {
+  suite.run("face serialize/deserialize with cullface and rotation", [] {
     Uv uv(0, 0, 16, 16);
     Face face(uv, "#layer0");
     face.cullface = FaceDirection::North;
@@ -48,7 +39,7 @@ int main() {
     test_util::check(face2.cullface.has_value(), "cullface should be set");
   });
 
-  run("element serialize/deserialize", [] {
+  suite.run("element serialize/deserialize", [] {
     Element elem;
     elem.from = Vec3{0, 0, 0};
     elem.to = Vec3{16, 16, 16};
@@ -64,7 +55,7 @@ int main() {
     test_util::check(elem2.faces.size() == 1, "faces count mismatch");
   });
 
-  run("display transform serialize/deserialize", [] {
+  suite.run("display transform serialize/deserialize", [] {
     DisplayTransform dt;
     dt.rotation = Vec3{0, 90, 0};
     dt.scale = Vec3{0.5, 0.5, 0.5};
@@ -77,7 +68,7 @@ int main() {
                      "roundtrip missing transforms");
   });
 
-  run("model serialize/deserialize with textures and display", [] {
+  suite.run("model serialize/deserialize with textures and display", [] {
     Model model;
     model.parent = "item/generated";
     model.textures["layer0"] = "minecraft:item/stone";
@@ -95,8 +86,47 @@ int main() {
                      "display roundtrip missing");
   });
 
-  debug::Logger::info() << "[summary] " << passed << "/" << total
-                        << " tests passed\n";
-  test_util::end();
-  return passed == total ? 0 : 1;
+  suite.run("on_shelf display context round-trips", [] {
+    const json j =
+        json::parse(R"({"display":{"on_shelf":{"rotation":[0,180,0]}}})");
+    Model model;
+    model.deserialize(j);
+    test_util::check(model.display.count(DisplayTransformType::OnShelf) == 1,
+                     "on_shelf not loaded");
+    test_util::check(model.serialize()["display"].contains("on_shelf"),
+                     "on_shelf not written back");
+  });
+
+  suite.run("unknown display context is skipped, not fatal", [] {
+    const json j = json::parse(
+        R"({"display":{"future_context":{"rotation":[0,0,0]},"gui":{"rotation":[0,0,0]}}})");
+    Model model;
+    model.deserialize(j);
+    test_util::check(model.display.count(DisplayTransformType::Gui) == 1,
+                     "valid context lost alongside unknown one");
+    test_util::check(model.display.size() == 1, "unknown context was kept");
+  });
+
+  suite.run("object-form texture keeps sprite and force_translucent", [] {
+    const json j = json::parse(
+        R"({"textures":{"all":{"sprite":"minecraft:block/blue_stained_glass","force_translucent":true},"particle":"minecraft:block/x"}})");
+    Model model;
+    model.deserialize(j);
+    test_util::check(model.textures["all"] ==
+                         "minecraft:block/blue_stained_glass",
+                     "object texture sprite not read");
+    test_util::check(model.forceTranslucent.count("all") == 1,
+                     "force_translucent not read");
+    test_util::check(model.textures["particle"] == "minecraft:block/x",
+                     "plain string texture broken");
+    const json out = model.serialize();
+    test_util::check(out["textures"]["all"]["sprite"] ==
+                             "minecraft:block/blue_stained_glass" &&
+                         out["textures"]["all"]["force_translucent"] == true,
+                     "object texture not written back in object form");
+    test_util::check(out["textures"]["particle"] == "minecraft:block/x",
+                     "plain string texture written in wrong form");
+  });
+
+  return suite.finish();
 }
