@@ -1,0 +1,48 @@
+{
+  "note": "Shader overlays for unshaded item models, in the order of the EO pack. Later entries overlap earlier ones, as in EO.",
+  "overlays": [
+    {
+      "directory": "1.21.5",
+      "minFormat": 46,
+      "maxFormat": 55,
+      "files": [
+        "assets/minecraft/shaders/core/rendertype_item_entity_translucent_cull.fsh",
+        "assets/minecraft/shaders/core/rendertype_item_entity_translucent_cull.vsh"
+      ]
+    },
+    {
+      "directory": "1.21.6",
+      "minFormat": 56,
+      "maxFormat": 65,
+      "files": [
+        "assets/minecraft/shaders/core/rendertype_item_entity_translucent_cull.fsh"
+      ]
+    },
+    {
+      "directory": "1.21.9",
+      "minFormat": 65,
+      "maxFormat": 75,
+      "files": [
+        "assets/minecraft/shaders/core/rendertype_item_entity_translucent_cull.fsh"
+      ]
+    },
+    {
+      "directory": "26.1",
+      "minFormat": 84,
+      "maxFormat": 96,
+      "files": [
+        "assets/minecraft/shaders/core/item.fsh",
+        "assets/minecraft/shaders/core/item.vsh"
+      ]
+    },
+    {
+      "directory": "26.3",
+      "minFormat": 97,
+      "maxFormat": 128,
+      "files": [
+        "assets/minecraft/shaders/core/item.fsh",
+        "assets/minecraft/shaders/core/item.vsh"
+      ]
+    }
+  ]
+}
