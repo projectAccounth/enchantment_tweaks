@@ -138,7 +138,7 @@ private:
   std::string msg_;
 
 public:
-  explicit AbortException(std::string reason) : msg_(std::move(reason)) {};
+  explicit AbortException(std::string reason) : msg_(std::move(reason)){};
   const char *what() const noexcept override { return msg_.c_str(); };
 
   ~AbortException() override = default;
@@ -157,5 +157,32 @@ template <typename Test> bool runCase(const std::string &name, Test &&test) {
     return false;
   }
 }
+
+// Runs named cases and reports "passed/total" at the end. Each test file uses
+// one Suite:
+//   test_util::Suite suite;
+//   suite.run("name", [] { test_util::check(...); });
+//   return suite.finish();
+class Suite {
+public:
+  Suite() { begin(); }
+
+  template <typename Fn> void run(const std::string &name, Fn &&fn) {
+    ++total_;
+    if (runCase(name, std::forward<Fn>(fn))) ++passed_;
+  }
+
+  // Prints the summary and returns the process exit code.
+  int finish() {
+    debug::Logger::info() << "[summary] " << passed_ << "/" << total_
+                          << " tests passed\n";
+    end();
+    return passed_ == total_ ? 0 : 1;
+  }
+
+private:
+  size_t passed_ = 0;
+  size_t total_ = 0;
+};
 
 } // namespace test_util

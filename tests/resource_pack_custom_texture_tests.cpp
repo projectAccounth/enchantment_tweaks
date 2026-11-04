@@ -3,6 +3,7 @@
 #include "core/util/image.hpp"
 #include "test_utils.hpp"
 
+#include <algorithm>
 #include <cstdlib>
 #include <filesystem>
 #include <stdexcept>
@@ -23,6 +24,13 @@ int main() {
 
   std::vector<std::pair<std::string, std::string>> testCases = {
       {"set1", "test.zip"}, {"26.1", "26.1.jar"}, {"1.21.4", "1.21.4.jar"}};
+  if (!std::all_of(testCases.begin(), testCases.end(), [&](const auto &test) {
+        return fs::exists(fixturePath / test.first / test.second);
+      })) {
+    debug::Logger::warning()
+        << "[skip] resource-pack fixtures are unavailable\n";
+    return 77;
+  }
 
   int failures = 0;
   test_util::begin();

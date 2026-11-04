@@ -2,6 +2,7 @@
 #include "core/util/debug.hpp"
 #include "test_utils.hpp"
 
+#include <algorithm>
 #include <filesystem>
 #include <stdexcept>
 #include <string>
@@ -20,6 +21,13 @@ int main() {
 
   std::vector<std::pair<std::string, std::string>> testCases = {
       {"set1", "test.zip"}, {"26.1", "26.1.jar"}, {"1.21.4", "1.21.4.jar"}};
+  if (!std::all_of(testCases.begin(), testCases.end(), [&](const auto &test) {
+        return fs::exists(fixturePath / test.first / test.second);
+      })) {
+    debug::Logger::warning()
+        << "[skip] resource-pack fixtures are unavailable\n";
+    return 77;
+  }
 
   test_util::begin();
   int failures = 0;
