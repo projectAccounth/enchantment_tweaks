@@ -89,7 +89,6 @@ if(NOT EMSCRIPTEN)
       GIT_REPOSITORY https://github.com/projectAccounth/driveker.git
       GIT_TAG v0.2.0
       GIT_SHALLOW TRUE
-      PATCH_COMMAND git apply "${CMAKE_SOURCE_DIR}/cmake/patches/driveker-windows-opaque.patch"
     )
     FetchContent_MakeAvailable(driveker)
   elseif(NOT TARGET Driveker::GL)
@@ -101,7 +100,6 @@ if(NOT EMSCRIPTEN)
       GIT_TAG v0.2.0
       GIT_SHALLOW TRUE
       SOURCE_SUBDIR src/gl
-      PATCH_COMMAND git apply "${CMAKE_SOURCE_DIR}/cmake/patches/driveker-windows-opaque.patch"
     )
     FetchContent_MakeAvailable(driveker_gl_source)
 

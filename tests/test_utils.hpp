@@ -15,8 +15,11 @@
 
 #if defined(_WIN32) || defined(_WIN64)
 #define PLATFORM_WINDOWS
-#include <psapi.h>
+#ifndef WIN32_LEAN_AND_MEAN
+#define WIN32_LEAN_AND_MEAN
+#endif
 #include <windows.h>
+#include <psapi.h>
 #pragma comment(lib, "psapi.lib")
 
 #elif defined(__APPLE__) && defined(__MACH__)
