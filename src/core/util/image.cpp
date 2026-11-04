@@ -2,7 +2,14 @@
 #include "libraries/stb/stb_image.h"
 #include "libraries/stb/stb_image_write.h"
 
+// Implemented in src/libraries/stb_image_impl.cpp
+extern "C" unsigned char *stbi_write_png_to_mem(const unsigned char *pixels,
+                                                int stride_bytes, int x, int y,
+                                                int n, int *out_len);
+
+#include <cstdlib>
 #include <stdexcept>
+#include <vector>
 
 namespace enchantment_tweaks::image {
 
@@ -54,12 +61,47 @@ void Image::setPixel(int x, int y, const Pixel &p) {
 
 void Image::save(const std::string &path) const {
   if (width_ == 0 || height_ == 0) {
-    throw std::runtime_error("enchantment_tweaks::image::Image::save: empty image");
+    throw std::runtime_error(
+        "enchantment_tweaks::image::Image::save: empty image");
   }
-  int result = stbi_write_png(path.c_str(), width_, height_, 4, pixels_.data(), width_ * 4);
+  int result = stbi_write_png(path.c_str(), width_, height_, 4, pixels_.data(),
+                              width_ * 4);
   if (result == 0) {
-    throw std::runtime_error("enchantment_tweaks::image::Image::save: failed to write '" + path + "'");
+    throw std::runtime_error(
+        "enchantment_tweaks::image::Image::save: failed to write '" + path +
+        "'");
   }
+}
+
+Image Image::scaledNearest(int factor) const {
+  if (factor < 1)
+    throw std::invalid_argument("scale factor must be at least 1");
+  if (width_ == 0 || height_ == 0)
+    throw std::runtime_error("scaledNearest: empty image");
+  Image out(width_ * factor, height_ * factor);
+  for (int y = 0; y < out.height(); ++y) {
+    for (int x = 0; x < out.width(); ++x) {
+      out.setPixel(x, y, at(x / factor, y / factor));
+    }
+  }
+  return out;
+}
+
+std::vector<uint8_t> Image::encodePng() const {
+  if (width_ == 0 || height_ == 0) {
+    throw std::runtime_error(
+        "enchantment_tweaks::image::Image::encodePng: empty image");
+  }
+  int length = 0;
+  unsigned char *encoded = stbi_write_png_to_mem(pixels_.data(), width_ * 4,
+                                                 width_, height_, 4, &length);
+  if (!encoded) {
+    throw std::runtime_error(
+        "enchantment_tweaks::image::Image::encodePng: encoder failed");
+  }
+  std::vector<uint8_t> out(encoded, encoded + length);
+  std::free(encoded);
+  return out;
 }
 
 } // namespace enchantment_tweaks::image

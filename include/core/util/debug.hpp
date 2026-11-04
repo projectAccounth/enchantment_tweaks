@@ -23,15 +23,6 @@ inline void trim(std::string &s) {
     s.clear();
   }
 }
-#include <chrono>
-#include <cstdint>
-#include <fstream>
-#include <iomanip>
-#include <iostream>
-#include <memory>
-#include <mutex>
-#include <sstream>
-#include <string>
 
 class Logger {
 public:
@@ -64,7 +55,7 @@ public:
       const std::string timestamp = getTimestamp();
       const std::string lvlStr = levelToString(level_);
 
-      // msg w/ ANSI color
+      /// Message with ANSI color.
       const std::string colorStart = levelToColor(level_);
       const std::string colorEnd = colorStart.empty() ? "" : "\x1b[0m";
       const std::string consoleMessage = "[" + timestamp + "] [" + colorStart +
@@ -75,7 +66,7 @@ public:
       if (auto &f = getFileStream(); f && f->is_open()) {
         const std::string fileMessage =
             "[" + timestamp + "] [" + lvlStr + "] " + s + "\n";
-        (*f) << fileMessage;
+        (*f) << fileMessage << std::flush;
       }
     }
   }
@@ -101,11 +92,6 @@ public:
     f = std::make_unique<std::ofstream>(path, append ? std::ios::app
                                                      : std::ios::trunc);
     return f->is_open();
-  }
-
-  static void closeLogFile() {
-    std::lock_guard<std::mutex> lock(getMutex());
-    getFileStream().reset();
   }
 
 private:

@@ -29,21 +29,28 @@ public:
   Image(int w, int h, std::vector<uint8_t> pixels)
       : width_(w), height_(h), pixels_(std::move(pixels)) {}
 
-  static Image load(const std::string &path);
+  [[nodiscard]] static Image load(const std::string &path);
 
   [[nodiscard]] int width() const noexcept { return width_; }
   [[nodiscard]] int height() const noexcept { return height_; }
-  bool empty() const noexcept { return width_ == 0 || height_ == 0; }
+  [[nodiscard]] bool empty() const noexcept {
+    return width_ == 0 || height_ == 0;
+  }
 
-  Pixel at(int x, int y) const;
+  [[nodiscard]] Pixel at(int x, int y) const;
 
-  bool isOpaque(int x, int y) const;
+  [[nodiscard]] bool isOpaque(int x, int y) const;
 
-  const std::vector<uint8_t> &pixels() const noexcept { return pixels_; }
-  std::vector<uint8_t> &pixels() noexcept { return pixels_; }
+  [[nodiscard]] const std::vector<uint8_t> &pixels() const noexcept {
+    return pixels_;
+  }
+  [[nodiscard]] std::vector<uint8_t> &pixels() noexcept { return pixels_; }
 
   void setPixel(int x, int y, const Pixel &p);
   void save(const std::string &path) const;
+
+  [[nodiscard]] Image scaledNearest(int factor) const;
+  [[nodiscard]] std::vector<uint8_t> encodePng() const;
 
 private:
   int width_ = 0;
