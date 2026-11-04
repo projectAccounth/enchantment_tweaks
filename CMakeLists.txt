@@ -55,7 +55,9 @@ if(NOT EMSCRIPTEN)
 
   find_package(CURL QUIET)
 
-  if(NOT CURL_FOUND)
+  if(CURL_FOUND)
+    set(ET_CURL_TARGET CURL::libcurl)
+  else()
     message(STATUS "libcurl not found on system. Building.")
 
     set(BUILD_CURL_EXE OFF CACHE INTERNAL "library")
@@ -76,6 +78,7 @@ if(NOT EMSCRIPTEN)
         )
 
     FetchContent_MakeAvailable(curl)
+    set(ET_CURL_TARGET libcurl_static)
   endif()
 
   find_package(SDL3 CONFIG REQUIRED COMPONENTS SDL3-shared)
@@ -139,11 +142,13 @@ if(NOT EMSCRIPTEN)
         GIT_SUBMODULES ""   # tests
     )
   FetchContent_MakeAvailable(nfd)
-  target_link_libraries(et_native PRIVATE nfd enchantment_tweaks_core curl)
+  target_link_libraries(et_native PRIVATE nfd enchantment_tweaks_core
+    ${ET_CURL_TARGET})
 
   add_executable(enchantment_tweaks_native apps/native/main.cpp)
   target_include_directories(enchantment_tweaks_native PRIVATE ${CMAKE_SOURCE_DIR}/apps/native)
-  target_link_libraries(enchantment_tweaks_native PRIVATE enchantment_tweaks_core et_native curl)
+  target_link_libraries(enchantment_tweaks_native PRIVATE
+    enchantment_tweaks_core et_native ${ET_CURL_TARGET})
   if(ENCHANTMENT_TWEAKS_ENABLE_COVERAGE)
     target_link_options(enchantment_tweaks_native PRIVATE --coverage)
   endif()

@@ -20,7 +20,9 @@
 #endif
 #include <windows.h>
 #include <psapi.h>
+#if defined(_MSC_VER)
 #pragma comment(lib, "psapi.lib")
+#endif
 
 #elif defined(__APPLE__) && defined(__MACH__)
 #define PLATFORM_MACOS
