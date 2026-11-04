@@ -83,14 +83,17 @@ if(NOT EMSCRIPTEN)
 
   find_package(SDL3 CONFIG REQUIRED COMPONENTS SDL3-shared)
 
-  find_package(Driveker 0.2.0 CONFIG QUIET)
+  if(WIN32)
+    find_package(GLEW REQUIRED)
+  endif()
+  find_package(Driveker 0.2.2 CONFIG QUIET)
   if(NOT TARGET Driveker::Core)
     set(DRIVEKER_BUILD_TESTS OFF CACHE BOOL "" FORCE)
     set(DRIVEKER_BUILD_GL ON CACHE BOOL "" FORCE)
     FetchContent_Declare(
       driveker
       GIT_REPOSITORY https://github.com/projectAccounth/driveker.git
-      GIT_TAG v0.2.1
+      GIT_TAG v0.2.2
       GIT_SHALLOW TRUE
     )
     FetchContent_MakeAvailable(driveker)
@@ -100,7 +103,7 @@ if(NOT EMSCRIPTEN)
     FetchContent_Declare(
       driveker_gl_source
       GIT_REPOSITORY https://github.com/projectAccounth/driveker.git
-      GIT_TAG v0.2.0
+      GIT_TAG v0.2.2
       GIT_SHALLOW TRUE
       SOURCE_SUBDIR src/gl
     )
@@ -116,6 +119,9 @@ if(NOT EMSCRIPTEN)
     target_link_libraries(et_driveker_gl
       PUBLIC Driveker::Core
       PRIVATE SDL3::SDL3-shared OpenGL::GL)
+    if(WIN32)
+      target_link_libraries(et_driveker_gl PRIVATE GLEW::GLEW)
+    endif()
   endif()
 
   if(NOT TARGET Driveker::GL)

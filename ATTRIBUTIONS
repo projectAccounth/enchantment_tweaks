@@ -53,14 +53,21 @@ License: zlib License
 Project URL: https://www.libsdl.org/
 Notes: Used for windowing, input, and platform integration.
 
-8. Driveker
+8. GLEW
+Source: Windows system package dependency
+Version: package-provided by the build environment
+License: Modified BSD License
+Project URL: https://github.com/nigels-com/glew
+Notes: Loads modern OpenGL entry points for the Windows renderer.
+
+9. Driveker
 Source: CMake package dependency
-Version: 0.2.0
+Version: 0.2.2
 License: upstream package license terms apply
 Project URL: see the upstream package metadata for the installed Driveker version
 Notes: Used as the rendering backend for the native UI.
 
-9. Inter Font
+10. Inter Font
 Source: bundled under apps/native/app/assets/fonts
 Version: current asset set in this repository
 License: SIL Open Font License 1.1 (OFL)

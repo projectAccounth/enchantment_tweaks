@@ -62,7 +62,7 @@ jobs:
         if: runner.os == 'Windows'
         run: |
           choco install cmake ninja pkgconfiglite -y
-          vcpkg install curl libzip freetype glfw3 sdl3 --triplet x64-windows
+          vcpkg install curl libzip freetype glfw3 sdl3 glew --triplet x64-windows
 
       - name: Configure (Native)
         shell: bash
