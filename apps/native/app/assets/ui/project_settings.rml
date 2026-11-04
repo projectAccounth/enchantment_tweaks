@@ -1,0 +1,55 @@
+<rml>
+<head>
+	<title>Project settings</title>
+	<link type="text/rcss" href="selector.rcss"/>
+</head>
+<body class="modal" data-model="selector" data-class-dark="dark_mode" data-event-click="dialog_backdrop">
+	<div class="dialog">
+		<h2>Project settings</h2>
+
+		<div class="field">
+			<label data-event-mouseover="show_tip('thickness')" data-event-mouseout="hide_tip">Thickness <span class="opt">(px)</span></label>
+			<input type="text" id="set-thickness" maxlength="8" data-value="project_form.thickness"/>
+					<p class="field-hint">Depth of the item's sprite. 1 is the default.</p>
+		</div>
+
+		<div class="field">
+			<label data-event-mouseover="show_tip('outline_size')" data-event-mouseout="hide_tip">Outline size <span class="opt">(px, 0 = none)</span></label>
+			<input type="text" id="set-outline" maxlength="8" data-value="project_form.outline_size"/>
+					<p class="field-hint">Width of the outline around the item. 0 gives no outline.</p>
+		</div>
+
+		<div class="field">
+			<label data-event-mouseover="show_tip('outline_color')" data-event-mouseout="hide_tip">Outline color <span class="opt">(hex)</span></label>
+			<input type="text" id="set-color" maxlength="6" data-value="project_form.outline_color"/>
+					<p class="field-hint">Six hex digits, rrggbb. ffffff is white.</p>
+		</div>
+
+		<div class="field">
+			<label data-event-mouseover="show_tip('unenchanted')" data-event-mouseout="hide_tip">Unenchanted outlines</label>
+			<button class="pill toggle" data-class-on="project_form.unenchanted" data-event-click="toggle_project_setting('unenchanted')"><span>{{ project_form.unenchanted ? 'On' : 'Off' }}</span></button>
+					<p class="field-hint">Also outlines items without an enchantment. When off, they keep their original model.</p>
+		</div>
+
+		<div class="field">
+			<label data-event-mouseover="show_tip('unshaded')" data-event-mouseout="hide_tip">Unshaded unenchanted models</label>
+			<button class="pill toggle" data-class-on="project_form.unshaded" data-event-click="toggle_project_setting('unshaded')"><span>{{ project_form.unshaded ? 'On' : 'Off' }}</span></button>
+					<p class="field-hint">Needs Unenchanted outlines. Enchanted models are always unshaded.</p>
+		</div>
+
+		<div class="field">
+			<label data-event-mouseover="show_tip('merge')" data-event-mouseout="hide_tip">Merge runs <span class="opt">(generated items only)</span></label>
+			<button class="pill toggle" data-class-on="project_form.merge" data-event-click="toggle_project_setting('merge')"><span>{{ project_form.merge ? 'On' : 'Off' }}</span></button>
+			<p class="field-hint">Smaller file, may change the look in some packs. Custom 3D models are never merged.</p>
+		</div>
+
+		<p class="err" data-if="project_form.error != ''">{{ project_form.error }}</p>
+
+		<div class="dlg-actions">
+			<button class="pill" data-event-click="close_dialog"><span>Cancel</span></button>
+			<button class="pill accent" data-event-click="submit_project_settings"><span>Save project settings</span></button>
+		</div>
+	</div>
+	<div class="tooltip" data-if="tip_visible" data-style-left="tip_x" data-style-top="tip_y">{{ tip_text }}</div>
+</body>
+</rml>

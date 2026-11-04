@@ -1,0 +1,19 @@
+<rml>
+<head>
+	<title>Save current project?</title>
+	<link type="text/rcss" href="selector.rcss"/>
+</head>
+<body class="modal" data-model="selector" data-class-dark="dark_mode" data-event-click="dialog_backdrop">
+	<div class="dialog">
+		<h2>Save current project?</h2>
+		<p class="message-text">The current project has changes that are not saved.</p>
+		<p class="field-hint"><b>Export</b> writes the selected items (or the pack) as a zip and closes. It does <b>not</b> save your project progress.</p>
+		<div class="dlg-actions unsaved-actions">
+			<button id="unsaved-cancel" class="pill" data-event-click="menu_action('unsaved_cancel', '')"><span>Cancel</span></button>
+			<button class="pill" data-event-click="menu_action('unsaved_dont_save', '')"><span>Don't Save</span></button>
+			<button class="pill" data-event-click="menu_action('unsaved_export', '')"><span>Export</span></button>
+			<button class="pill accent" data-event-click="menu_action('unsaved_save', '')"><span>Save</span></button>
+		</div>
+	</div>
+</body>
+</rml>

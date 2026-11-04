@@ -3,11 +3,26 @@
 	<title>Enchantment Tweaks</title>
 	<link type="text/rcss" href="selector.rcss"/>
 </head>
-<body class="app" data-model="selector" data-event-click="body_click">
+<body class="app" data-model="selector" data-class-dark="dark_mode" data-event-click="body_click">
 
 	<div class="topbar">
-		<button class="brand" data-event-click="open_link('home')"><img src="../icons/logo.png"/></button>
+		<button class="brand" data-event-click="open_link('home')"><div class="logo-art"></div></button>
 		<div class="tag"><span>Selector</span></div>
+	</div>
+
+	<div class="menubar">
+		<div class="menu-group">
+			<button class="menu-title" data-class-open="menu_open == 'file'" data-event-click="toggle_menu('file')"><span>File</span></button>
+			<div class="menu-drop" data-if="menu_open == 'file'">
+				<div data-for="m : file_menu">
+					<button class="menu-item" data-if="!m.separator" data-class-disabled="!m.enabled" data-attrif-disabled="!m.enabled" data-event-click="menu_action(m.action, m.arg)"><span>{{ m.label }}</span><span class="kbd">{{ m.shortcut }}</span></button>
+					<div class="menu-sep" data-if="m.separator"></div>
+				</div>
+			</div>
+		</div>
+		<button class="menu-title" data-event-click="open_app_settings_button"><span>Settings</span></button>
+		<button class="menu-title" data-class-disabled="!has_project" data-event-click="open_project_settings_button"><span>Project settings</span></button>
+		<span class="status">{{ status_text }}</span>
 	</div>
 
 	<div class="shell">
@@ -27,6 +42,7 @@
 							<span>{{ v.label }}</span>
 						</button>
 					</div>
+					<button class="pill more-versions" data-event-click="menu_action('open_download', '')"><span>Download more versions...</span></button>
 				</div>
 			</div>
 
@@ -58,7 +74,7 @@
 			<div class="side-rule"></div>
 			<div class="actions">
 				<div class="pill count"><span>{{ created_label }}</span></div>
-				<button class="pill accent" data-attrif-disabled="!can_download" data-event-click="download"><span>Download Pack</span></button>
+				<button class="pill accent" data-class-disabled="!can_download" data-event-click="download"><span>Download Pack</span></button>
 			</div>
 			<p class="hint" data-if="!can_download">{{ download_hint }}</p>
 		</div>
@@ -81,6 +97,7 @@
 					<div class="ico chev" data-class-collapsed="!sort_open"></div>
 					<span>Sort By</span>
 				</button>
+				<button class="pill group-toggle" data-event-click="menu_action('cycle_group', '')" data-event-mouseover="show_tip('group')" data-event-mouseout="hide_tip"><span>{{ group_label }}</span></button>
 				<div class="menu" data-if="sort_open">
 					<button data-for="o : sort_options" data-event-click="set_sort(o.key)">
 						<div class="ico check" data-class-off="!o.checked"></div>
@@ -89,30 +106,47 @@
 				</div>
 			</div>
 
-			<div class="sec" data-for="s : sections" data-if="s.visible">
-				<button class="head sec-head" data-event-click="toggle_collapsed(s.collapse_key)">
-					<div class="ico chev" data-class-collapsed="!s.open"></div>
-					<span class="t">{{ s.label }}</span>
-					<span class="ns">{{ s.ns_id }}</span>
-				</button>
-				<div class="rule"></div>
-				<div class="grid" data-if="s.open && !s.empty">
-					<button class="card" data-for="c : s.cards" data-if="c.visible" data-class-selected="c.selected" data-event-click="toggle_item(c.key)">
-						<div class="thumb">
-							<img data-attr-src="c.icon"/>
-							<div class="badge" data-if="c.selected"><div class="ico sm check-ok"></div></div>
-						</div>
-						<div class="name">{{ c.name }}</div>
-						<div class="id">{{ c.id }}</div>
+			<div class="grid-spacer" data-style-height="grid_top"></div>
+			<div data-for="row : grid_window">
+				<div class="sec-head-row" data-if="row.is_header">
+					<button class="head sec-head" data-class-open="row.open" data-event-click="toggle_collapsed(row.collapse_key)" data-event-mousedown="context_click(row.collapse_key, 'group')">
+						<div class="ico chev" data-class-collapsed="!row.open"></div>
+						<span class="t">{{ row.label }}</span>
+						<span class="ns">{{ row.ns_id }}</span>
 					</button>
+					<div class="rule"></div>
 				</div>
-				<p class="empty" data-if="s.open && s.empty">No items in this namespace yet. Use Add Item to create one.</p>
+				<div class="card-row" data-if="row.is_cards">
+					<div class="grid">
+						<button class="card" data-for="c : row.cards" data-if="c.visible" data-class-selected="c.selected" data-event-click="toggle_item(c.key)" data-event-mousedown="context_click(c.key, 'item')">
+							<div class="thumb">
+								<img data-attr-src="c.icon"/>
+							</div>
+							<div class="name">{{ c.name }}</div>
+							<div class="id">{{ c.id }}</div>
+						</button>
+					</div>
+				</div>
+				<div class="empty-row" data-if="row.is_empty">
+					<p class="empty">No items in this namespace yet. Use Add Item to create one.</p>
+				</div>
 			</div>
+			<div class="grid-spacer" data-style-height="grid_bottom"></div>
 
 			<p class="empty" data-if="no_match">{{ no_match_text }}</p>
 		</div>
 	</div>
 
+	<div class="ctx-menu" data-if="ctx_open" data-style-left="ctx_x" data-style-top="ctx_y">
+		<button class="ctx-item" data-for="e : ctx_items" data-class-disabled="!e.enabled" data-attrif-disabled="!e.enabled" data-event-click="ctx_action(e.action)"><span>{{ e.label }}</span></button>
+	</div>
+	<div class="tooltip" data-if="tip_visible" data-style-left="tip_x" data-style-top="tip_y">{{ tip_text }}</div>
+	<div class="busy-overlay" data-if="busy">
+		<div class="busy-box"><p class="busy-text">{{ busy_text }}</p></div>
+	</div>
+	<div class="debug-panel" data-if="debug_visible">
+		<p class="debug-text">{{ debug_text }}</p>
+	</div>
 	<div class="toast-wrap" data-if="toast_visible"><div class="toast"><span>{{ toast_text }}</span></div></div>
 </body>
 </rml>

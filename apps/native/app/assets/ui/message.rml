@@ -1,0 +1,15 @@
+<rml>
+<head>
+	<title>Message</title>
+	<link type="text/rcss" href="selector.rcss"/>
+</head>
+<body class="modal" data-model="selector" data-class-dark="dark_mode" data-event-click="dialog_backdrop">
+	<div class="dialog">
+		<h2>{{ message_title }}</h2>
+		<p class="message-text">{{ message_text }}</p>
+		<div class="dlg-actions">
+			<button id="message-ok" class="pill accent" data-event-click="message_ok"><span>OK</span></button>
+		</div>
+	</div>
+</body>
+</rml>

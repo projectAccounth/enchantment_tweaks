@@ -1,0 +1,28 @@
+<rml>
+<head>
+	<title>New game project</title>
+	<link type="text/rcss" href="selector.rcss"/>
+</head>
+<body class="modal" data-model="selector" data-class-dark="dark_mode" data-event-click="dialog_backdrop">
+	<div class="dialog dialog-wide">
+		<h2>New game project</h2>
+		<p class="dl-summary">Choose an installed Minecraft version. The project reads its items from that version.</p>
+
+		<div class="remote-scroll pick-scroll">
+			<div class="remote-row" data-for="g : installed_games">
+				<div class="remote-label">
+					<div class="remote-title"><span class="remote-id">Minecraft {{ g.id }}</span></div>
+				</div>
+				<div class="remote-action">
+					<button class="pill accent" data-event-click="menu_action('new_game_project', g.jar)"><span>Open</span></button>
+				</div>
+			</div>
+		</div>
+
+		<div class="dlg-actions">
+			<button class="pill" data-event-click="menu_action('new_game_browse', '')"><span>Browse for a JAR...</span></button>
+			<button id="pick-close" class="pill" data-event-click="close_dialog"><span>Close</span></button>
+		</div>
+	</div>
+</body>
+</rml>

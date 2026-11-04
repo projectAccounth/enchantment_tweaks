@@ -3,7 +3,7 @@
 	<title>Add item</title>
 	<link type="text/rcss" href="selector.rcss"/>
 </head>
-<body class="modal" data-model="selector" data-event-click="dialog_backdrop">
+<body class="modal" data-model="selector" data-class-dark="dark_mode" data-event-click="dialog_backdrop">
 	<div class="dialog">
 		<h2>Add item</h2>
 

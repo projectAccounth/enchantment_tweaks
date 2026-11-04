@@ -1,0 +1,54 @@
+<rml>
+<head>
+	<title>Download Minecraft</title>
+	<link type="text/rcss" href="selector.rcss"/>
+</head>
+<body class="modal" data-model="selector" data-class-dark="dark_mode" data-event-click="dialog_backdrop">
+	<div class="dialog dialog-wide">
+		<h2>Minecraft versions</h2>
+		<p class="dl-note" data-if="download_note != ''">{{ download_note }}</p>
+
+		<div class="dl-toolbar">
+			<div class="search search-remote">
+				<div class="ico magnifier"></div>
+				<input type="text" id="remote-search" maxlength="64" data-value="remote_query" data-event-change="remote_search_changed"/>
+				<span class="placeholder" data-if="remote_query == ''">Search by version or type</span>
+			</div>
+			<button class="pill toggle-snap" data-event-click="menu_action('remote_snapshots', '')"><span>{{ remote_snapshots }}</span></button>
+		</div>
+		<p class="dl-summary">{{ remote_summary }}</p>
+
+		<div class="remote-scroll">
+			<div data-for="g : remote_groups">
+				<button class="remote-group" data-class-open="g.open" data-event-click="menu_action('remote_toggle', g.type)">
+					<span>{{ g.header }}</span>
+				</button>
+				<div class="remote-rows" data-if="g.open">
+					<div class="remote-row" data-for="r : g.rows">
+						<div class="remote-label">
+							<div class="remote-title">
+								<span class="remote-id">{{ r.label }}</span>
+								<span class="badge-installed" data-if="r.installed">Installed</span>
+							</div>
+							<span class="remote-detail" data-if="r.show_detail">{{ r.status }}</span>
+						</div>
+						<div class="remote-action">
+							<button class="pill accent" data-if="r.button == 'download'" data-event-click="menu_action('download_version', r.id)"><span>Download</span></button>
+							<button class="pill accent" data-if="r.button == 'retry'" data-event-click="menu_action('download_version', r.id)"><span>Retry</span></button>
+							<button class="pill danger" data-if="r.button == 'uninstall'" data-event-click="menu_action('uninstall_version', r.id)"><span>Uninstall</span></button>
+							<div class="progress-action" data-if="r.show_bar" data-event-click="menu_action('cancel_download', r.id)">
+								<div class="progress-fill" data-style-width="r.bar"></div>
+								<span class="progress-text">{{ r.bar_text }}</span>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+
+		<div class="dlg-actions">
+			<button id="download-close" class="pill" data-event-click="close_dialog"><span>Close</span></button>
+		</div>
+	</div>
+</body>
+</rml>

@@ -1,0 +1,26 @@
+<rml>
+<head>
+	<title>Application settings</title>
+	<link type="text/rcss" href="selector.rcss"/>
+</head>
+<body class="modal" data-model="selector" data-class-dark="dark_mode" data-event-click="dialog_backdrop">
+	<div class="dialog">
+		<h2>Application settings</h2>
+
+		<div class="field">
+			<label data-event-mouseover="show_tip('dark')" data-event-mouseout="hide_tip">Dark mode</label>
+			<button id="set-display" class="pill toggle" data-class-on="app_form.dark" data-event-click="toggle_app_setting('dark')"><span>{{ app_form.dark ? 'On' : 'Off' }}</span></button>
+		</div>
+
+		<p class="field-hint">Dark mode applies to every window.</p>
+
+		<p class="err" data-if="app_form.error != ''">{{ app_form.error }}</p>
+
+		<div class="dlg-actions">
+			<button class="pill" data-event-click="close_dialog"><span>Cancel</span></button>
+			<button class="pill accent" data-event-click="submit_app_settings"><span>Save</span></button>
+		</div>
+	</div>
+	<div class="tooltip" data-if="tip_visible" data-style-left="tip_x" data-style-top="tip_y">{{ tip_text }}</div>
+</body>
+</rml>
