@@ -87,7 +87,7 @@ if(NOT EMSCRIPTEN)
     FetchContent_Declare(
       driveker
       GIT_REPOSITORY https://github.com/projectAccounth/driveker.git
-      GIT_TAG v0.2.0
+      GIT_TAG v0.2.1
       GIT_SHALLOW TRUE
     )
     FetchContent_MakeAvailable(driveker)
