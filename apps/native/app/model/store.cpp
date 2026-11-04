@@ -1,5 +1,7 @@
 #include "store.h"
-#include "selector/model/types.h"
+
+#include "app/model/types.h"
+#include "core/util/text.hpp"
 #include <algorithm>
 #include <cctype>
 #include <cstddef>
@@ -12,16 +14,9 @@
 namespace et {
 
 namespace {
-std::string lower(std::string s) {
-  std::transform(s.begin(), s.end(), s.begin(), [](unsigned char c) {
-    return static_cast<char>(std::tolower(c));
-  });
-  return s;
-}
-// Case-insensitive, ties broken by the raw comparison (stands in for JS
-// localeCompare; use ICU if you need real locale rules).
 int compare(const std::string &a, const std::string &b) {
-  const std::string la = lower(a), lb = lower(b);
+  const std::string la = enchantment_tweaks::text::asciiLower(a),
+                    lb = enchantment_tweaks::text::asciiLower(b);
   if (int c = la.compare(lb)) return c;
   return a.compare(b);
 }
@@ -77,8 +72,7 @@ State Store::build(const Catalog &catalog,
     if (persisted->versions) {
       s.versions.clear();
       for (const auto &v : *persisted->versions)
-        if (std::find(catalog.versions.begin(), catalog.versions.end(), v) !=
-            catalog.versions.end())
+        if (std::ranges::find(catalog.versions, v) != catalog.versions.end())
           s.versions.insert(v);
     }
     if (persisted->created)
@@ -102,9 +96,8 @@ void Store::toggleVersion(const std::string &v) {
 void Store::setVersions(const std::vector<std::string> &versions) {
   state_.versions.clear();
   for (const auto &v : versions)
-    if (std::find(state_.available_versions.begin(),
-                  state_.available_versions.end(),
-                  v) != state_.available_versions.end())
+    if (std::ranges::find(state_.available_versions, v) !=
+        state_.available_versions.end())
       state_.versions.insert(v);
   notify(change::Selection);
 }
@@ -182,7 +175,7 @@ CatalogView Store::getCatalogView() const {
   CatalogView view;
   view.query = trim(state_.query);
   view.filtering = !view.query.empty();
-  const std::string q = lower(view.query);
+  const std::string q = enchantment_tweaks::text::asciiLower(view.query);
 
   auto cmp = [&](const Item &a, const Item &b) {
     switch (state_.sort) {
@@ -210,8 +203,10 @@ CatalogView Store::getCatalogView() const {
     std::stable_sort(sec.items.begin(), sec.items.end(), cmp);
     for (const Item &i : sec.items) {
       const bool match = !view.filtering ||
-                         lower(i.name).find(q) != std::string::npos ||
-                         lower(i.id).find(q) != std::string::npos;
+                         enchantment_tweaks::text::asciiLower(i.name).find(q) !=
+                             std::string::npos ||
+                         enchantment_tweaks::text::asciiLower(i.id).find(q) !=
+                             std::string::npos;
       sec.visible.push_back(match);
       sec.visible_count += match;
     }

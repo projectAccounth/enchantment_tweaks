@@ -1,6 +1,12 @@
 #include "validation.h"
+#include "app/model/types.h"
 #include <algorithm>
 #include <cctype>
+#include <cstddef>
+#include <optional>
+#include <string>
+#include <string_view>
+#include <vector>
 
 namespace et {
 
@@ -50,8 +56,13 @@ validateItemDraft(const std::string &ns, const std::string &id_in,
   if (!AllOf(id, ItemIdChar))
     return "Item ID can only use lowercase letters, numbers and underscores.";
   for (const Item &i : existing)
-    if (i.ns == ns && i.id == id)
-      return ns + ":" + id + " already exists. Choose a different ID.";
+    if (i.ns == ns && i.id == id) {
+      std::string message = ns;
+      message += ':';
+      message += id;
+      message += " already exists. Choose a different ID.";
+      return message;
+    }
   return std::nullopt;
 }
 

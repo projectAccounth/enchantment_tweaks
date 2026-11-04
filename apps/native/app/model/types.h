@@ -1,27 +1,24 @@
 #pragma once
-// Plain data types shared by the model and UI layers. No RmlUi, no JSON library
-// here. The JSON shapes (see Json.cpp) are identical to the web app's, so one
-// catalog.json serves both.
 
 #include <optional>
 #include <string>
 #include <string_view>
 #include <vector>
 
+// TODO: Move these UI types into the main project namespace.
 namespace et {
 
 struct Namespace {
   std::string id;
   std::string label;
-  bool custom = false; // created by the user in the UI
+  bool custom = false;
 };
 
 struct Item {
   std::string ns;
   std::string id;
   std::string name;
-  std::string
-      icon; // sprite name ("sword"), a file path, or empty (placeholder)
+  std::string icon;
   bool custom = false;
 
   std::string Key() const { return ns + ":" + id; }
@@ -39,11 +36,9 @@ struct Catalog {
   std::vector<Item> items;
 };
 
-/// What is saved between sessions (same shape as the web app's localStorage
-/// entry).
 struct PersistedState {
   std::optional<std::vector<std::string>> versions;
-  std::optional<std::vector<std::string>> created; // "namespace:id"
+  std::optional<std::vector<std::string>> created;
   std::optional<SortKey> sort;
   std::vector<Namespace> custom_namespaces;
   std::vector<Item> custom_items;

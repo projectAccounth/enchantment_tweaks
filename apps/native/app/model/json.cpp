@@ -1,5 +1,7 @@
+#include <algorithm>
 #include "json.h"
-#include "selector/model/types.h"
+#include "app/model/types.h"
+#include "core/util/file_io.hpp"
 #include <filesystem>
 #include <fstream>
 #include <ios>
@@ -11,6 +13,8 @@
 #include <system_error>
 #include <utility>
 #include <vector>
+
+namespace fs = std::filesystem;
 
 namespace et {
 using nlohmann::json;
@@ -56,9 +60,8 @@ std::vector<Item> parseItems(const json &arr,
     auto name = Str(i, "name");
     if (!ns || !id || !name) continue;
     if (known) {
-      bool ok = false;
-      for (const auto &n : *known)
-        ok = ok || n.id == *ns;
+      const bool ok = std::any_of(known->begin(), known->end(),
+                                  [&](const auto &n) { return n.id == *ns; });
       if (!ok) continue;
     }
     Item item{.ns = *ns,
@@ -122,18 +125,10 @@ std::string toJson(const PersistedState &p) {
   return j.dump(2);
 }
 
-std::optional<std::string> readFile(const std::filesystem::path &path) {
-  std::ifstream in(path, std::ios::binary);
-  if (!in) return std::nullopt;
-  std::ostringstream ss;
-  ss << in.rdbuf();
-  return ss.str();
-}
-
-bool writeFile(const std::filesystem::path &path, const std::string &text) {
+bool writeFile(const fs::path &path, const std::string &text) {
   std::error_code ec;
   if (path.has_parent_path())
-    std::filesystem::create_directories(path.parent_path(), ec);
+    fs::create_directories(path.parent_path(), ec);
   std::ofstream out(path, std::ios::binary | std::ios::trunc);
   if (!out) return false;
   out << text;
