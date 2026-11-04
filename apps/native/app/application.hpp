@@ -1,8 +1,7 @@
 #pragma once
 
 #include "model/store.h"
-#include "selector/model/types.h"
-#include "selector/render/driveker_rml_renderer.h"
+#include "render/driveker_rml_renderer.h"
 #include "ui/selector_ui.h"
 
 #include <SDL3/SDL.h>
@@ -11,27 +10,29 @@
 #include <memory>
 #include <string>
 
-namespace enchantment_tweaks::native {
+#ifndef ET_COMMIT_HASH
+#define ET_COMMIT_HASH "dev"
+#endif
 
-using SelectorCatalog = et::Catalog;
+namespace enchantment_tweaks::native {
+namespace fs = std::filesystem;
+
 using SelectorCallbacks = et::UiCallbacks;
 
-struct SelectorApplicationConfig {
-  std::filesystem::path assets_directory;
-  std::filesystem::path state_file;
-  std::filesystem::path pack_directory;
-  std::string window_title = "Enchantment Tweaks";
+struct ApplicationConfig {
+  fs::path assets_directory;
+  fs::path app_directory;
+  std::string window_title = "Enchantment Tweaks build " ET_COMMIT_HASH;
   int width = 1280;
   int height = 860;
 };
 
-class SelectorApplication final {
+class Application final {
 public:
-  SelectorApplication(SelectorCatalog catalog, SelectorApplicationConfig config,
-                      SelectorCallbacks callbacks = {});
-  ~SelectorApplication();
-  SelectorApplication(const SelectorApplication &) = delete;
-  SelectorApplication &operator=(const SelectorApplication &) = delete;
+  explicit Application(ApplicationConfig config);
+  ~Application();
+  Application(const Application &) = delete;
+  Application &operator=(const Application &) = delete;
 
   bool init();
   void cleanup();
