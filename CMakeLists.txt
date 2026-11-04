@@ -7,6 +7,13 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 set(BUILD_SHARED_LIBS OFF)
 
+option(ENCHANTMENT_TWEAKS_ENABLE_COVERAGE "Instrument project code for coverage" OFF)
+if(ENCHANTMENT_TWEAKS_ENABLE_COVERAGE)
+  if(NOT CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+    message(FATAL_ERROR "Coverage instrumentation currently requires GCC.")
+  endif()
+endif()
+
 if(MSVC)
   add_compile_options(/W4 /Zi)
 else()
@@ -38,6 +45,9 @@ target_compile_options(miniz PRIVATE
 set_target_properties(miniz PROPERTIES LINKER_LANGUAGE C)
 
 target_link_libraries(enchantment_tweaks_core PUBLIC miniz)
+if(ENCHANTMENT_TWEAKS_ENABLE_COVERAGE)
+  target_compile_options(enchantment_tweaks_core PRIVATE --coverage)
+endif()
 
 # native
 if(NOT EMSCRIPTEN)
@@ -79,6 +89,7 @@ if(NOT EMSCRIPTEN)
       GIT_REPOSITORY https://github.com/projectAccounth/driveker.git
       GIT_TAG v0.2.0
       GIT_SHALLOW TRUE
+      PATCH_COMMAND git apply "${CMAKE_SOURCE_DIR}/cmake/patches/driveker-windows-opaque.patch"
     )
     FetchContent_MakeAvailable(driveker)
   elseif(NOT TARGET Driveker::GL)
@@ -90,6 +101,7 @@ if(NOT EMSCRIPTEN)
       GIT_TAG v0.2.0
       GIT_SHALLOW TRUE
       SOURCE_SUBDIR src/gl
+      PATCH_COMMAND git apply "${CMAKE_SOURCE_DIR}/cmake/patches/driveker-windows-opaque.patch"
     )
     FetchContent_MakeAvailable(driveker_gl_source)
 
@@ -134,6 +146,9 @@ if(NOT EMSCRIPTEN)
   add_executable(enchantment_tweaks_native apps/native/main.cpp)
   target_include_directories(enchantment_tweaks_native PRIVATE ${CMAKE_SOURCE_DIR}/apps/native)
   target_link_libraries(enchantment_tweaks_native PRIVATE enchantment_tweaks_core et_native curl)
+  if(ENCHANTMENT_TWEAKS_ENABLE_COVERAGE)
+    target_link_options(enchantment_tweaks_native PRIVATE --coverage)
+  endif()
 
   # windows pops a console window if one is not a Win32 graphical executable
   if(WIN32)
@@ -162,6 +177,9 @@ if(NOT EMSCRIPTEN)
   add_executable(ui_snapshot apps/native/tools/ui_snapshot.cpp apps/native/tools/soft_renderer.cpp)
   target_include_directories(ui_snapshot PRIVATE ${CMAKE_SOURCE_DIR}/apps/native ${CMAKE_SOURCE_DIR}/include/libraries)
   target_link_libraries(ui_snapshot PRIVATE et_native enchantment_tweaks_core RmlUi::Core)
+  if(ENCHANTMENT_TWEAKS_ENABLE_COVERAGE)
+    target_link_options(ui_snapshot PRIVATE --coverage)
+  endif()
 
   add_custom_command(TARGET enchantment_tweaks_native POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy_directory

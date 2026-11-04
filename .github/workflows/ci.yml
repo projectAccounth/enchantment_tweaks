@@ -36,7 +36,7 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y build-essential cmake ninja-build pkg-config \
-            libcurl4-openssl-dev libzip-dev libfreetype6-dev libgl1-mesa-dev \
+            libgtk-3-dev libcurl4-openssl-dev libzip-dev libfreetype6-dev libgl1-mesa-dev \
             libx11-dev libxrandr-dev libxinerama-dev libxcursor-dev libxi-dev \
             libglfw3-dev
 
@@ -69,19 +69,47 @@ jobs:
         run: |
           if [ "$RUNNER_OS" == "Windows" ]; then
             cmake -B build_native -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE="$VCPKG_INSTALLATION_ROOT/scripts/buildsystems/vcpkg.cmake"
+          elif [ "$RUNNER_OS" == "Linux" ]; then
+            cmake -B build_native -G Ninja -DCMAKE_BUILD_TYPE=Debug -DENCHANTMENT_TWEAKS_ENABLE_COVERAGE=ON
           else
             cmake -B build_native -G Ninja -DCMAKE_BUILD_TYPE=Release
           fi
 
       - name: Build (Native)
         run: |
-          cmake --build build_native -j8
+          cmake --build build_native -j4
 
       - name: Run Tests
         working-directory: build_native/tests
         shell: bash
         run: |
           ctest --output-on-failure
+
+      - name: Generate coverage report
+        if: runner.os == 'Linux' && always()
+        run: |
+          mkdir -p coverage
+          gcovr --root "$GITHUB_WORKSPACE" \
+            --object-directory build_native \
+            --filter "$GITHUB_WORKSPACE/src/core/" \
+            --filter "$GITHUB_WORKSPACE/include/core/" \
+            --txt-summary \
+            --html-details coverage/index.html \
+            | tee coverage/summary.txt
+          {
+            echo "## Test coverage"
+            echo '```text'
+            cat coverage/summary.txt
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload native binaries
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: enchantment-tweaks-${{ matrix.os }}
+          path: build_native/bin/
+          if-no-files-found: ignore
 
       - name: Upload test results
         if: always()
@@ -90,6 +118,7 @@ jobs:
           name: test-results-${{ matrix.os }}
           path: |
             build_native/tests/Testing/
+            coverage/
           if-no-files-found: ignore
 
   build-wasm:
@@ -117,7 +146,7 @@ jobs:
 
       - name: Build (WASM)
         run: |
-          cmake --build build_wasm -j8
+          cmake --build build_wasm -j4
 
       - name: Upload WASM artifacts
         if: always()

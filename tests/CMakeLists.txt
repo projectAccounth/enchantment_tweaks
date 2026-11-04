@@ -21,6 +21,10 @@ foreach(TEST_SOURCE ${TEST_SOURCES})
         ${CMAKE_CURRENT_SOURCE_DIR}
     )
     target_link_libraries(${TEST_NAME} PRIVATE enchantment_tweaks_core test_core)
+    if(ENCHANTMENT_TWEAKS_ENABLE_COVERAGE)
+        target_compile_options(${TEST_NAME} PRIVATE --coverage)
+        target_link_options(${TEST_NAME} PRIVATE --coverage)
+    endif()
     
     # Most tests use fixtures relative to the tests directory
     target_compile_definitions(${TEST_NAME} PRIVATE
