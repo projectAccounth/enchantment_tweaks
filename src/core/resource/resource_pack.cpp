@@ -162,7 +162,8 @@ bool ResourcePackLoader::loadFromDirectory(const fs::path &dir) {
                              .name = std::move(name),
                              .rawJson = std::move(j)});
         } catch (const std::exception &error) {
-          debug::Logger::warning() << "skipped an unreadable model: " << error.what();
+          debug::Logger::warning()
+              << "skipped an unreadable model: " << error.what();
         }
       }
     }
@@ -507,7 +508,8 @@ void ResourcePackLoader::scanTextures(const fs::path &texturesDir,
                              .height = img.height()});
       }
     } catch (const std::exception &error) {
-      debug::Logger::warning() << "skipped an unreadable texture: " << error.what();
+      debug::Logger::warning()
+          << "skipped an unreadable texture: " << error.what();
     }
   }
 }
@@ -618,7 +620,8 @@ void ResourcePackLoader::loadModels(const std::vector<std::string> &modelIds) {
                              .name = std::move(name),
                              .rawJson = std::move(j)});
         } catch (const std::exception &error) {
-          debug::Logger::warning() << "skipped an unreadable model: " << error.what();
+          debug::Logger::warning()
+              << "skipped an unreadable model: " << error.what();
         }
       }
     }
@@ -743,6 +746,11 @@ ResourcePackLoader::getItemDefinitionJson(const std::string &itemId) const {
       return entry.rawJson;
     }
   }
+  // a pack that only changes textures has no definitions of its own uses the
+  // referenced jar''s one
+  if (basePack_) {
+    return basePack_->getItemDefinitionJson(itemId);
+  }
   return std::nullopt;
 }
 
@@ -752,6 +760,9 @@ ResourcePackLoader::getTexturePixels(const std::string &nmsp_,
   auto it = textureIndex_.find(nmsp_ + ":" + name);
   if (it != textureIndex_.end()) {
     return textures_[it->second].pixels;
+  }
+  if (basePack_) {
+    return basePack_->getTexturePixels(nmsp_, name);
   }
   return std::nullopt;
 }

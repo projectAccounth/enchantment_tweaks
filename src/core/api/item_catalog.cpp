@@ -4,15 +4,16 @@
 #include "core/api/pack_writer.hpp"
 #include "core/resource/resource_pack.hpp"
 #include "core/types/common.hpp"
+#include "core/types/identifier.hpp"
 #include "core/types/mesh/types.hpp"
 #include "core/util/debug.hpp"
 #include "core/util/image.hpp"
-#include "core/types/identifier.hpp"
-#include "core/util/text.hpp"
 
 #include <algorithm>
 #include <cctype>
 #include <cstddef>
+#include <cstdint>
+#include <cstdio>
 #include <exception>
 #include <filesystem>
 #include <map>
@@ -56,6 +57,24 @@ findTexture(const resource::ResourcePackLoader &loader, const std::string &ns,
 
 } // namespace
 
+std::string hashPixels(const image::Image &img) {
+  uint64_t hash = 0xcbf29ce484222325ULL;
+  const auto mix = [&hash](uint8_t byte) {
+    hash ^= byte;
+    hash *= 0x100000001b3ULL;
+  };
+  for (const int dim : {img.width(), img.height()}) {
+    for (int shift = 0; shift < 32; shift += 8)
+      mix(static_cast<uint8_t>(dim >> shift));
+  }
+  for (const uint8_t byte : img.pixels())
+    mix(byte);
+  char text[17];
+  (void)std::snprintf(text, sizeof(text), "%016llx",
+                      static_cast<unsigned long long>(hash));
+  return text;
+}
+
 std::string displayNameFromId(const std::string &id) {
   std::string out;
   bool startOfWord = true;
@@ -73,9 +92,8 @@ std::string displayNameFromId(const std::string &id) {
   return out;
 }
 
-ItemCatalog
-ItemCatalog::load(const fs::path &basePath,
-                  const std::optional<fs::path> &overlayPath) {
+ItemCatalog ItemCatalog::load(const fs::path &basePath,
+                              const std::optional<fs::path> &overlayPath) {
   resource::ResourcePackLoader base(basePath);
   if (!base.load()) {
     throw std::runtime_error("could not load base pack: " + basePath.string());
@@ -95,15 +113,65 @@ ItemCatalog::load(const fs::path &basePath,
   out.gameVersion_ = base.getPack().gameVersion;
   out.format_ = base.getPack().gameResourceFormat;
 
-  // prioritize overlay
+  // items come from definition, models will point to textures
+  // fixes random UI sprites displaying on custom packs
+  std::unordered_set<std::string> packModels;
+  std::unordered_set<std::string> packTextures;
+  if (overlay) {
+    for (const auto &model : overlay->getModels())
+      packModels.insert(model.nmsp_ + ":" + model.name);
+    for (const auto &tex : overlay->getTextures())
+      packTextures.insert(tex.nmsp_ + ":" + tex.name);
+  }
+  const auto packChangesModel = [&](const std::string &modelId) {
+    try {
+      const Identifier parsed = Identifier::parse(modelId);
+      return packModels.count(parsed.getNamespace() + ":" + parsed.getPath()) >
+             0;
+    } catch (const std::runtime_error &) {
+      return false;
+    }
+  };
+  const auto packChangesTexture = [&](const std::string &ref) {
+    try {
+      const Identifier parsed = Identifier::parse(ref);
+      return packTextures.count(parsed.getNamespace() + ":" +
+                                parsed.getPath()) > 0;
+    } catch (const std::runtime_error &) {
+      return false;
+    }
+  };
+  const auto packChangesItem = [&](const json &baseDef) {
+    std::vector<std::string> leaves;
+    collectModelIds(baseDef, leaves);
+    for (const auto &leaf : leaves) {
+      if (packChangesModel(leaf)) return true;
+      const auto model = base.getModelJson(leaf);
+      if (!model || !model->contains("textures")) continue;
+      for (const auto &[variable, value] : model->at("textures").items()) {
+        if (value.is_string() && !value.get<std::string>().starts_with('#') &&
+            packChangesTexture(value.get<std::string>())) {
+          return true;
+        }
+      }
+    }
+    return false;
+  };
+
   std::vector<std::string> itemIds;
   std::unordered_set<std::string> seen;
-  for (const auto *loader : {overlay ? &*overlay : nullptr, &base}) {
-    if (!loader) continue;
-    for (const auto &def : loader->getDef()) {
+  if (overlay) {
+    for (const auto &def : overlay->getDef()) {
       const std::string id = def.nmsp + ":" + def.name;
       if (seen.insert(id).second) itemIds.push_back(id);
     }
+  }
+  for (const auto &def : base.getDef()) {
+    const std::string id = def.nmsp + ":" + def.name;
+    if (seen.count(id) > 0) continue;
+    if (overlay && !packChangesItem(def.rawJson)) continue;
+    seen.insert(id);
+    itemIds.push_back(id);
   }
 
   resource::ModelResolver resolver(top);
@@ -121,14 +189,15 @@ ItemCatalog::load(const fs::path &basePath,
       item.ns = parsed.getNamespace();
       item.id = parsed.getPath();
     } catch (const std::runtime_error &error) {
-      debug::Logger::warning() << "skipping item with an invalid id: " << error.what();
+      debug::Logger::warning()
+          << "skipping item with an invalid id: " << error.what();
       continue;
     }
     item.name = displayNameFromId(item.id);
     item.definition = *def;
     std::set<std::string> unique(leaves.begin(), leaves.end());
     item.modelIds.assign(unique.begin(), unique.end());
-    std::sort(item.modelIds.begin(), item.modelIds.end(), naturalLess);
+    std::ranges::sort(item.modelIds, naturalLess);
 
     for (const auto &modelId : item.modelIds) {
       try {
@@ -249,7 +318,12 @@ ItemCatalog::writeIcons(const fs::path &dir) const {
     const int largest = std::max(item.sprite.width(), item.sprite.height());
     const int factor = std::max(1, kIconPixels / std::max(1, largest));
 
-    const auto file = dir / (item.ns + "_" + item.id + ".png");
+    // The file name includes a hash of the pixels, so a changed texture (from a
+    // pack) will use a different texture
+    // Previously the icons will always be picked up from the central cache for
+    // a version
+    const auto file = dir / (item.ns + "_" + item.id + "_" +
+                             hashPixels(item.sprite) + ".png");
 
     if (!fs::exists(file)) {
       item.sprite.scaledNearest(factor).save(file.string());
