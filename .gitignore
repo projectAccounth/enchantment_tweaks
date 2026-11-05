@@ -13,3 +13,4 @@ build_wasm/
 # extra files
 *.zip
 !tests/**/*.zip
+apps/native/tools/
