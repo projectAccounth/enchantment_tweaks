@@ -185,11 +185,11 @@ if(NOT EMSCRIPTEN)
 
   if (EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/apps/native/tools/ui_snapshot.cpp")
     add_executable(ui_snapshot apps/native/tools/ui_snapshot.cpp apps/native/tools/soft_renderer.cpp)
-  endif()
-  target_include_directories(ui_snapshot PRIVATE ${CMAKE_SOURCE_DIR}/apps/native ${CMAKE_SOURCE_DIR}/include/libraries)
-  target_link_libraries(ui_snapshot PRIVATE et_native enchantment_tweaks_core RmlUi::Core)
-  if(ENCHANTMENT_TWEAKS_ENABLE_COVERAGE)
-    target_link_options(ui_snapshot PRIVATE --coverage)
+    target_include_directories(ui_snapshot PRIVATE ${CMAKE_SOURCE_DIR}/apps/native ${CMAKE_SOURCE_DIR}/include/libraries)
+    target_link_libraries(ui_snapshot PRIVATE et_native enchantment_tweaks_core RmlUi::Core)
+    if(ENCHANTMENT_TWEAKS_ENABLE_COVERAGE)
+      target_link_options(ui_snapshot PRIVATE --coverage)
+    endif()
   endif()
 
   add_custom_command(TARGET enchantment_tweaks_native POST_BUILD
