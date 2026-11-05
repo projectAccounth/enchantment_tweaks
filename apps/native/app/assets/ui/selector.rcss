@@ -506,3 +506,7 @@ body.dark .ico.info { decorator: image(../icons/dark/info.png contain); }
 body.dark select selectarrow { decorator: image(../icons/dark/chevron-down.png contain); }
 
 .kbd { margin-left: 24dp; color: var(--muted-strong); font-weight: 500; font-size: 11dp; white-space: nowrap; }
+
+/* The label fills the button and is centered in it, so it lines up on every platform, whatever
+   the font metrics are. */
+button.pill.pack-action > span { display: block; width: 100%; text-align: center; line-height: 30dp; }

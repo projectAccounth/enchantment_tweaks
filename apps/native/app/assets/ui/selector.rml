@@ -74,7 +74,7 @@
 			<div class="side-rule"></div>
 			<div class="actions">
 				<div class="pill count"><span>{{ created_label }}</span></div>
-				<button class="pill accent" data-class-disabled="!can_download" data-event-click="download"><span>Download Pack</span></button>
+				<button class="pill accent pack-action" data-class-disabled="!can_download" data-event-click="download"><span>Download Pack</span></button>
 			</div>
 			<p class="hint" data-if="!can_download">{{ download_hint }}</p>
 		</div>
