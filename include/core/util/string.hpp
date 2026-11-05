@@ -8,7 +8,7 @@
 
 namespace enchantment_tweaks::util {
 
-uint64_t fnv1a(const std::vector<uint8_t> &bytes) {
+inline uint64_t fnv1a(const std::vector<uint8_t> &bytes) {
   uint64_t h = 0xcbf29ce484222325ULL;
   for (uint8_t b : bytes) {
     h ^= b;

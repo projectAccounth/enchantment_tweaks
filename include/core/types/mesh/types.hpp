@@ -1,17 +1,17 @@
 #pragma once
 
 #include "core/types/common.hpp"
-#include "core/types/identifier.hpp"
 #include "core/util/json/utils.hpp"
 
+#include <cstdint>
 #include <map>
 #include <optional>
 #include <string>
 #include <vector>
 
-using namespace util;
-
 namespace enchantment_tweaks::mesh {
+
+using namespace util;
 
 enum class DisplayTransformType : uint8_t {
   ThirdPersonLeftHand,

@@ -7,6 +7,7 @@
 
 namespace enchantment_tweaks::item {
 
+using namespace util;
 using nlohmann::json;
 
 RgbColor::RgbColor(int32_t packed) : packed_(packed) {}

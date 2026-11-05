@@ -6,7 +6,6 @@
 #include <memory>
 
 using nlohmann::json;
-using namespace util;
 
 namespace enchantment_tweaks::item {
 

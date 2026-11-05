@@ -3,13 +3,14 @@
 #include "core/types/common.hpp"
 #include "core/util/json/utils.hpp"
 
+#include <cstdint>
 #include <memory>
 #include <optional>
 #include <string>
 
-using namespace util;
-
 namespace enchantment_tweaks::item {
+
+using namespace util;
 
 enum class SpecialModelType : uint8_t {
   Banner,

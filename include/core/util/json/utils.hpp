@@ -10,7 +10,7 @@
 #include <vector>
 
 using nlohmann::json;
-namespace util {
+namespace enchantment_tweaks::util {
 
 template <typename EnumT>
 using EnumTable = std::vector<std::pair<EnumT, std::string>>;
@@ -58,4 +58,4 @@ void writeOptional(json &j, const std::string &key,
   }
 }
 
-} // namespace util
+} // namespace enchantment_tweaks::util

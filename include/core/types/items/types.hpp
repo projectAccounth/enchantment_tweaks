@@ -4,9 +4,8 @@
 #include "core/util/json/utils.hpp"
 
 #include <array>
+#include <cstdint>
 #include <optional>
-
-using namespace util;
 
 namespace enchantment_tweaks::item {
 

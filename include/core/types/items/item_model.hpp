@@ -6,14 +6,15 @@
 #include "tint_source.hpp"
 #include "types.hpp"
 
+#include <cstdint>
 #include <memory>
 #include <optional>
 #include <string>
 #include <vector>
 
-using namespace util;
-
 namespace enchantment_tweaks::item {
+
+using namespace util;
 
 enum class ItemModelType : uint8_t {
   Model,

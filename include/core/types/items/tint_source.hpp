@@ -4,12 +4,13 @@
 #include "core/util/json/utils.hpp"
 #include "types.hpp"
 
+#include <cstdint>
 #include <memory>
 #include <string>
 
-using namespace util;
-
 namespace enchantment_tweaks::item {
+
+using namespace util;
 
 enum class TintSourceType : uint8_t {
   Constant,
