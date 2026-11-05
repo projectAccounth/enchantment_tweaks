@@ -1,6 +1,7 @@
 #pragma once
 
 #include "core/util/debug.hpp"
+#include "core/util/platform/mem.hpp"
 #include "libraries/nlohmann/json.hpp"
 
 #include <chrono>
@@ -13,30 +14,6 @@
 #include <string>
 #include <utility>
 
-#if defined(_WIN32) || defined(_WIN64)
-#define PLATFORM_WINDOWS
-#ifndef WIN32_LEAN_AND_MEAN
-#define WIN32_LEAN_AND_MEAN
-#endif
-#include <windows.h>
-#include <psapi.h>
-#if defined(_MSC_VER)
-#pragma comment(lib, "psapi.lib")
-#endif
-
-#elif defined(__APPLE__) && defined(__MACH__)
-#define PLATFORM_MACOS
-#include <mach/mach.h>
-
-#elif defined(__linux__) || defined(__linux) || defined(__unix__)
-#define PLATFORM_LINUX
-#include <fstream>
-#include <sys/resource.h>
-#include <unistd.h>
-#else
-#define PLATFORM_UNKNOWN
-#endif
-
 #ifndef TEST_FIXTURE_DIR
 #define TEST_FIXTURE_DIR "tests"
 #endif
@@ -48,32 +25,7 @@ inline static std::chrono::time_point TEST_BEGIN =
                                       TEST_END =
                                           std::chrono::steady_clock::now();
 
-inline static size_t peakMem() {
-#if defined(PLATFORM_WINDOWS)
-  PROCESS_MEMORY_COUNTERS pmc;
-  if (GetProcessMemoryInfo(GetCurrentProcess(), &pmc, sizeof(pmc))) {
-    return static_cast<size_t>(pmc.PeakWorkingSetSize); // bytes
-  }
-  return 0;
-
-#elif defined(PLATFORM_MACOS) || defined(PLATFORM_LINUX)
-  struct rusage usage;
-  if (getrusage(RUSAGE_SELF, &usage) == 0) {
-#if defined(PLATFORM_MACOS)
-
-    // macOS returns #bytes
-    return static_cast<size_t>(usage.ru_maxrss);
-#else
-    // Linux returns kBs
-    return static_cast<size_t>(usage.ru_maxrss) * 1024;
-#endif
-  }
-  return 0;
-
-#else
-  return 0;
-#endif
-}
+inline static size_t peakMem() { return enchantment_tweaks::util::peakMem(); }
 
 using nlohmann::json;
 using namespace enchantment_tweaks;
@@ -143,7 +95,7 @@ private:
   std::string msg_;
 
 public:
-  explicit AbortException(std::string reason) : msg_(std::move(reason)){};
+  explicit AbortException(std::string reason) : msg_(std::move(reason)) {};
   const char *what() const noexcept override { return msg_.c_str(); };
 
   ~AbortException() override = default;

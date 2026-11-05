@@ -15,6 +15,7 @@
 #include "core/project/project_file.hpp"
 #include "core/project/version_list.hpp"
 #include "core/util/debug.hpp"
+#include "core/util/platform/mem.hpp"
 #include "file_dialogs.hpp"
 
 #include "render/driveker_rml_renderer.h"
@@ -29,6 +30,7 @@
 #include <SDL3/SDL_stdinc.h>
 #include <SDL3/SDL_timer.h>
 #include <SDL3/SDL_video.h>
+#include <algorithm>
 #include <cstdint>
 #include <driveker/core/render_system.hpp>
 #include <driveker/gl/gl_device_backend.hpp>
@@ -381,7 +383,8 @@ struct Application::Impl {
     ui_->OpenDownloadDialog();
   }
 
-  // Applies completed manifest/download work and reports whether the UI changed.
+  // Applies completed manifest/download work and reports whether the UI
+  // changed.
   bool poll() {
     bool changed = false;
     if (pendingStoreSync_) {
@@ -419,9 +422,8 @@ struct Application::Impl {
                              std::abs(a.fraction - b.fraction) < 0.01;
                     })) {
       for (const auto &status : statuses) {
-        const bool wasRunning = std::any_of(
-            lastStatuses_.begin(), lastStatuses_.end(),
-            [&](const DownloadStatus &p) {
+        const bool wasRunning =
+            std::ranges::any_of(lastStatuses_, [&](const DownloadStatus &p) {
               return p.id == status.id && (p.state == DownloadState::Running ||
                                            p.state == DownloadState::Queued);
             });
@@ -435,12 +437,13 @@ struct Application::Impl {
       lastStatuses_ = statuses;
       downloads_.clearFinished();
       lastStatuses_.erase(
-          std::remove_if(lastStatuses_.begin(), lastStatuses_.end(),
-                         [](const DownloadStatus &s) {
-                           return s.state == DownloadState::Done ||
-                                  s.state == DownloadState::Failed ||
-                                  s.state == DownloadState::Canceled;
-                         }),
+          std::ranges::remove_if(lastStatuses_,
+                                 [](const auto &s) {
+                                   return s.state == DownloadState::Done ||
+                                          s.state == DownloadState::Failed ||
+                                          s.state == DownloadState::Canceled;
+                                 })
+              .begin(),
           lastStatuses_.end());
       refreshRemoteView();
       refreshMenu();
@@ -546,8 +549,8 @@ struct Application::Impl {
       if (keys.empty()) return true;
       for (const auto &key : store_.state().created)
         keys.push_back(key);
-      std::sort(keys.begin(), keys.end());
-      keys.erase(std::unique(keys.begin(), keys.end()), keys.end());
+      std::ranges::sort(keys);
+      keys.erase(std::ranges::unique(keys).begin(), keys.end());
       store_.setCreated(keys);
       return true;
     }
@@ -679,17 +682,11 @@ struct Application::Impl {
   }
 
   static std::string residentMemoryText() {
-#if defined(__linux__)
-    // /proc/self/statm: "size resident shared ...", in pages.
-    std::ifstream statm("/proc/self/statm");
-    std::string sizePages, residentPages;
-    if (statm >> sizePages >> residentPages) {
-      const double mb = std::stod(residentPages) *
-                        static_cast<double>(sysconf(_SC_PAGESIZE)) /
-                        (1024.0 * 1024.0);
+    auto mem = util::currentMem();
+    if (mem > 0) {
+      const double mb = mem / (1024.0 * 1024.0);
       return format1(mb) + " MB resident";
     }
-#endif
     return "not available on this system";
   }
 

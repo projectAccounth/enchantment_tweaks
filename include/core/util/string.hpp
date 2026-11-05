@@ -1,9 +1,21 @@
 #pragma once
 
+#include <cstdint>
+#include <cstdlib>
+#include <functional>
 #include <string>
 #include <vector>
 
-namespace util {
+namespace enchantment_tweaks::util {
+
+uint64_t fnv1a(const std::vector<uint8_t> &bytes) {
+  uint64_t h = 0xcbf29ce484222325ULL;
+  for (uint8_t b : bytes) {
+    h ^= b;
+    h *= 0x100000001b3ULL;
+  }
+  return h;
+}
 
 inline std::vector<std::string> split(const std::string &str,
                                       const std::string &delimiter) {
@@ -30,4 +42,4 @@ template <typename... Args> size_t hashMultiple(const Args &...args) {
   return seed;
 }
 
-} // namespace util
+} // namespace enchantment_tweaks::util

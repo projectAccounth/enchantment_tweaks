@@ -1,6 +1,7 @@
 #include "core/api/pack_writer.hpp"
 
 #include "core/api/item_conversion.hpp"
+#include "core/util/string.hpp"
 #include "core/util/zip_writer.hpp"
 
 #include <cstdint>
@@ -16,19 +17,6 @@ namespace fs = std::filesystem;
 
 namespace enchantment_tweaks::conversion {
 
-namespace {
-
-uint64_t fnv1a(const std::vector<uint8_t> &bytes) {
-  uint64_t h = 0xcbf29ce484222325ULL;
-  for (uint8_t b : bytes) {
-    h ^= b;
-    h *= 0x100000001b3ULL;
-  }
-  return h;
-}
-
-} // namespace
-
 PackBuilder::PackBuilder(std::string description, int packFormat)
     : description_(std::move(description)), packFormat_(packFormat) {}
 
@@ -36,7 +24,7 @@ void PackBuilder::add(const OutputFile &file) {
   if (file.path.empty()) {
     throw std::invalid_argument("pack file path cannot be empty");
   }
-  const auto print = std::make_pair(file.bytes.size(), fnv1a(file.bytes));
+  const auto print = std::make_pair(file.bytes.size(), util::fnv1a(file.bytes));
   const auto existing = paths_.find(file.path);
   if (existing != paths_.end()) {
     if (existing->second == print) return; // shared by two items, written
@@ -51,7 +39,7 @@ void PackBuilder::put(const OutputFile &file) {
     throw std::invalid_argument("pack file path cannot be empty");
   }
   if (file.path == "pack.mcmeta") return;
-  const auto print = std::make_pair(file.bytes.size(), fnv1a(file.bytes));
+  const auto print = std::make_pair(file.bytes.size(), util::fnv1a(file.bytes));
   paths_[file.path] = print;
   for (auto &existing : files_) {
     if (existing.path == file.path) {
