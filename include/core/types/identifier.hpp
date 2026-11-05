@@ -43,7 +43,8 @@ public:
 namespace std {
 template <> struct hash<enchantment_tweaks::Identifier> {
   size_t operator()(const enchantment_tweaks::Identifier &id) const noexcept {
-    return util::hashMultiple(id.getNamespace(), id.getPath());
+    return enchantment_tweaks::util::hashMultiple(id.getNamespace(),
+                                                  id.getPath());
   }
 };
 
