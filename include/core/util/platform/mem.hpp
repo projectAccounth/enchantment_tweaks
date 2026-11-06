@@ -2,18 +2,18 @@
 
 #include <cstdio>
 #include <cstdlib>
-
+// clang-format off
 #if defined(_WIN32) || defined(_WIN64)
 #define ET_PLATFORM_WINDOWS
 #ifndef WIN32_LEAN_AND_MEAN
 #define WIN32_LEAN_AND_MEAN
 #endif
-#include <psapi.h>
 #include <windows.h>
+#include <psapi.h>
 #if defined(_MSC_VER)
 #pragma comment(lib, "psapi.lib")
 #endif
-
+// clang-format on
 #elif defined(__APPLE__) && defined(__MACH__)
 #define ET_PLATFORM_MACOS
 #include <mach/mach.h>
