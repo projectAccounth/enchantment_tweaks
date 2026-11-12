@@ -63,6 +63,27 @@ namespace fs = std::filesystem;
 
 namespace enchantment_tweaks::native {
 
+// The window in units, logical units (for layout and input) and
+// physical pixels (for the GL viewport). The density is their ratio.
+struct WindowMetrics {
+  int logicalWidth = 0;
+  int logicalHeight = 0;
+  int pixelWidth = 0;
+  int pixelHeight = 0;
+  float density = 1.0f;
+};
+
+WindowMetrics windowMetrics(SDL_Window *window) {
+  WindowMetrics metrics;
+  SDL_GetWindowSize(window, &metrics.logicalWidth, &metrics.logicalHeight);
+  SDL_GetWindowSizeInPixels(window, &metrics.pixelWidth, &metrics.pixelHeight);
+  if (metrics.logicalWidth > 0) {
+    metrics.density = static_cast<float>(metrics.pixelWidth) /
+                      static_cast<float>(metrics.logicalWidth);
+  }
+  return metrics;
+}
+
 using enchantment_tweaks::debug::Logger;
 
 namespace {
@@ -1066,7 +1087,15 @@ int Application::run() {
     throw std::runtime_error("Could not initialize RmlUi selector");
   }
 
-  Rml::Context *context = Rml::CreateContext("selector", {width, height});
+  // RmlUi lays the UI out in logical window units, the same units as mouse
+  // input, renderer uses logical units
+
+  // On a high-density display the two
+  // differ, so the density ratio maps the stylesheet's dp units to pixels
+  const WindowMetrics metrics = windowMetrics(resource_.window);
+  Rml::Context *context = Rml::CreateContext(
+      "selector", {metrics.logicalWidth, metrics.logicalHeight});
+  context->SetDensityIndependentPixelRatio(metrics.density);
 
   auto ui = std::make_unique<et::SelectorUi>(
       context, impl_->store_, impl_->callbacks_,
@@ -1120,12 +1149,12 @@ int Application::run() {
       if (event.type == SDL_EVENT_QUIT)
         impl_->requestQuit();
 
-      else if (event.type == SDL_EVENT_WINDOW_PIXEL_SIZE_CHANGED) {
-        width = event.window.data1;
-        height = event.window.data2;
-
-        context->SetDimensions({width, height});
-        renderer->SetViewport(width, height);
+      else if (event.type == SDL_EVENT_WINDOW_PIXEL_SIZE_CHANGED ||
+               event.type == SDL_EVENT_WINDOW_DISPLAY_SCALE_CHANGED) {
+        const WindowMetrics changed = windowMetrics(resource_.window);
+        context->SetDimensions({changed.logicalWidth, changed.logicalHeight});
+        context->SetDensityIndependentPixelRatio(changed.density);
+        renderer->SetViewport(changed.pixelWidth, changed.pixelHeight);
 
       } else if (event.type == SDL_EVENT_TEXT_EDITING)
         textInput.HandleEdit(event.edit);
