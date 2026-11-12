@@ -18,10 +18,12 @@
 #include <algorithm>
 #include <array>
 #include <cstdint>
+#include <filesystem>
 #include <fstream>
+#include <ios>
 #include <iterator>
-#include <stdexcept>
 #include <span>
+#include <stdexcept>
 #include <string>
 #include <vector>
 
@@ -32,7 +34,9 @@ struct GpuVertex {
   float u, v;
 };
 
-std::string loadShader(const std::filesystem::path &path) {
+namespace fs = std::filesystem;
+
+std::string loadShader(const fs::path &path) {
   std::ifstream file(path, std::ios::binary);
   if (!file)
     throw std::runtime_error("Could not open shader file: " + path.string());
@@ -67,19 +71,22 @@ std::vector<Rml::byte> premultiply(Rml::Span<const Rml::byte> rgba) {
 }
 } // namespace
 
-DrivekerRmlRenderer::DrivekerRmlRenderer(
-    int width, int height, const std::filesystem::path &assets_directory)
+DrivekerRmlRenderer::DrivekerRmlRenderer(int width, int height,
+                                         const fs::path &assetDir)
     : device_(driveker::RenderSystem::getDevice()), width_(width),
       height_(height) {
-  const auto vertexShader = assets_directory / "shaders" / "ui.vert";
-  const auto fragmentShader = assets_directory / "shaders" / "ui.frag";
+  const auto vertexShader = assetDir / "shaders" / "ui.vert";
+  const auto fragmentShader = assetDir / "shaders" / "ui.frag";
+
   const auto vertexSource = loadShader(vertexShader);
   const auto fragmentSource = loadShader(fragmentShader);
+
   const auto shader = driveker::ShaderProgramDesc{
       .vertexSource = vertexSource,
       .fragmentSource = fragmentSource,
       .vertexSourceName = vertexShader.string(),
       .fragmentSourceName = fragmentShader.string()};
+
   pipeline_ = device_.createPipeline(
       driveker::PipelineDesc::builder(shader)
           .vertexFormat(uiVertexFormat())

@@ -2,8 +2,8 @@
 
 #include "core/api/mesh.hpp"
 #include "core/types/common.hpp"
-#include "core/util/image.hpp"
 #include "core/types/identifier.hpp"
+#include "core/util/image.hpp"
 #include "core/util/text.hpp"
 
 #include <cstddef>
@@ -106,8 +106,8 @@ private:
     const std::string modelPath = nsId.getPath();
     for (const auto &[ref, image] : source.customTextures) {
       const Identifier texNsId = Identifier::parse(ref);
-    const std::string &texNs = texNsId.getNamespace();
-    const std::string texPath = texNsId.getPath();
+      const std::string &texNs = texNsId.getNamespace();
+      const std::string texPath = texNsId.getPath();
       std::string path = "assets/";
       path += texNs;
       path += "/textures/";
