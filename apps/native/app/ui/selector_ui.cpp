@@ -319,8 +319,8 @@ bool SelectorUi::RegisterModel() {
   c.Bind("created_groups", &created_groups_);
   c.Bind("created_collapsed", &created_collapsed_);
   c.Bind("created_label", &created_label_);
-  c.Bind("can_download", &can_download_);
-  c.Bind("download_hint", &download_hint_);
+  c.Bind("can_export", &can_export_);
+  c.Bind("export_hint", &export_hint_);
   c.Bind("sections", &sections_);
   c.Bind("group_label", &group_label_);
   c.Bind("debug_visible", &debug_visible_);
@@ -385,15 +385,15 @@ void SelectorUi::BindEvents(Rml::DataModelConstructor &c) {
   on("open_link", [this](Rml::Event &, Args a) {
     if (cb_.open_link) cb_.open_link(Arg0(a));
   });
-  on("download", [this](Rml::Event &, Args) {
-    if (!can_download_) {
+  on("export", [this](Rml::Event &, Args) {
+    if (!can_export_) {
       ShowMessage("Nothing to export",
-                  download_hint_.empty()
+                  export_hint_.empty()
                       ? std::string("Select at least one item first.")
-                      : std::string(download_hint_));
+                      : std::string(export_hint_));
       return;
     }
-    Download();
+    ExportPack();
   });
 
   on("toggle_sort_menu", [this](Rml::Event &, Args) {
@@ -673,8 +673,8 @@ void SelectorUi::Refresh() {
           : "";
 
   created_label_ = std::to_string(s.created.size()) + " created";
-  can_download_ = !s.created.empty() && !s.versions.empty();
-  download_hint_ = s.created.empty()    ? "Select at least one item first"
+  can_export_ = !s.created.empty() && !s.versions.empty();
+  export_hint_ = s.created.empty()    ? "Select at least one item first"
                    : s.versions.empty() ? "Select at least one version first"
                                         : "";
 
@@ -699,7 +699,7 @@ void SelectorUi::Refresh() {
   // The search box owns `query`; rewriting it would move the caret.
   for (const char *name :
        {"versions", "versions_collapsed", "created_groups", "created_collapsed",
-        "created_label", "can_download", "download_hint", "sections",
+        "created_label", "can_export", "export_hint", "sections",
         "no_match", "no_match_text", "sort_options", "namespaces"})
     Dirty(name);
 }
@@ -849,7 +849,27 @@ void SelectorUi::UpdateGridColumns() {
   }
 }
 
+// Marks each pill button whose label is wider than the button, so only those show the fade.
+// Runs a few times a second: the layout is current by then, and it costs one query per pill.
+void SelectorUi::UpdateOverflowFades(double dt) {
+  fade_timer_ += dt;
+  if (fade_timer_ < 0.25 || !main_doc_) return;
+  fade_timer_ = 0.0;
+  Rml::ElementList buttons;
+  main_doc_->QuerySelectorAll(buttons, "button.pill");
+  for (Rml::Element *button : buttons) {
+    // The label is the first span; the fade, which is also a span, comes after it.
+    Rml::Element *label = button->QuerySelector("span");
+    if (!label) continue;
+    const bool overflowing = label->GetOffsetWidth() > button->GetClientWidth();
+    if (overflowing != button->IsClassSet("overflowing")) {
+      button->SetClass("overflowing", overflowing);
+    }
+  }
+}
+
 void SelectorUi::Update(double dt) {
+  UpdateOverflowFades(dt);
   // Update the visible window after scrolling or resizing.
   if (!main_el_ && main_doc_) main_el_ = main_doc_->QuerySelector(".main");
   if (main_el_) {
@@ -956,8 +976,8 @@ void SelectorUi::SubmitNamespace() {
   ShowToast("Added namespace " + ns.id);
 }
 
-void SelectorUi::Download() {
-  if (!can_download_) return;
+void SelectorUi::ExportPack() {
+  if (!can_export_) return;
   if (!cb_.save_pack) {
     ShowToast("No pack writer configured");
     return;

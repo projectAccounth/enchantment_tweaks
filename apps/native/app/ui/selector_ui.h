@@ -80,6 +80,8 @@ public:
   /// Initializes the UI and its data model.
   bool Initialize();
   void Update(double dt);
+  void UpdateOverflowFades(double dt);
+  double fade_timer_ = 0.0;
   /// Returns the delay until another update is needed.
   double NextUpdateDelay() const;
 
@@ -238,7 +240,7 @@ private:
   void Refresh();
   void Dirty(const char *name) { model_.DirtyVariable(name); }
 
-  void Download();
+  void ExportPack();
   void SubmitItem();
   void SubmitNamespace();
   void ShowDialog(Rml::ElementDocument *doc, const char *focus_id);
@@ -335,10 +337,10 @@ private:
   NamespaceFormVm ns_form_;
 
   bool versions_collapsed_ = false, created_collapsed_ = false;
-  bool no_match_ = false, can_download_ = false, sort_open_ = false,
+  bool no_match_ = false, can_export_ = false, sort_open_ = false,
        toast_visible_ = false;
 
-  Rml::String no_match_text_, created_label_, download_hint_, toast_text_;
+  Rml::String no_match_text_, created_label_, export_hint_, toast_text_;
 
   struct SupportedVm {
     Rml::String id;

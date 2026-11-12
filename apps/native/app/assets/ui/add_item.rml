@@ -28,7 +28,7 @@
 		<div class="field">
 			<label>Icon <span class="opt">(optional)</span></label>
 			<div class="icon-row">
-				<button class="pill" data-event-click="pick_icon"><span>Choose file...</span></button>
+				<button class="pill" data-event-click="pick_icon"><span>Choose file...</span><span class="fade"></span></button>
 				<span class="file">{{ item_form.icon_name == '' ? 'No file chosen' : item_form.icon_name }}</span>
 			</div>
 		</div>
@@ -36,8 +36,8 @@
 		<p class="err" data-if="item_form.error != ''">{{ item_form.error }}</p>
 
 		<div class="dlg-actions">
-			<button class="pill" data-event-click="close_dialog"><span>Cancel</span></button>
-			<button class="pill accent" data-event-click="submit_item"><span>Add item</span></button>
+			<button class="pill" data-event-click="close_dialog"><span>Cancel</span><span class="fade"></span></button>
+			<button class="pill accent" data-event-click="submit_item"><span>Add item</span><span class="fade"></span></button>
 		</div>
 	</div>
 </body>

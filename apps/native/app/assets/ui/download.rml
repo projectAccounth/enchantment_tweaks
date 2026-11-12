@@ -14,7 +14,7 @@
 				<input type="text" id="remote-search" maxlength="64" data-value="remote_query" data-event-change="remote_search_changed"/>
 				<span class="placeholder" data-if="remote_query == ''">Search by version or type</span>
 			</div>
-			<button class="pill toggle-snap" data-event-click="menu_action('remote_snapshots', '')"><span>{{ remote_snapshots }}</span></button>
+			<button class="pill toggle-snap" data-event-click="menu_action('remote_snapshots', '')"><span>{{ remote_snapshots }}</span><span class="fade"></span></button>
 		</div>
 		<p class="dl-summary">{{ remote_summary }}</p>
 
@@ -33,9 +33,9 @@
 							<span class="remote-detail" data-if="r.show_detail">{{ r.status }}</span>
 						</div>
 						<div class="remote-action">
-							<button class="pill accent" data-if="r.button == 'download'" data-event-click="menu_action('download_version', r.id)"><span>Download</span></button>
-							<button class="pill accent" data-if="r.button == 'retry'" data-event-click="menu_action('download_version', r.id)"><span>Retry</span></button>
-							<button class="pill danger" data-if="r.button == 'uninstall'" data-event-click="menu_action('uninstall_version', r.id)"><span>Uninstall</span></button>
+							<button class="pill accent" data-if="r.button == 'download'" data-event-click="menu_action('download_version', r.id)"><span>Download</span><span class="fade"></span></button>
+							<button class="pill accent" data-if="r.button == 'retry'" data-event-click="menu_action('download_version', r.id)"><span>Retry</span><span class="fade"></span></button>
+							<button class="pill danger" data-if="r.button == 'uninstall'" data-event-click="menu_action('uninstall_version', r.id)"><span>Uninstall</span><span class="fade"></span></button>
 							<div class="progress-action" data-if="r.show_bar" data-event-click="menu_action('cancel_download', r.id)">
 								<div class="progress-fill" data-style-width="r.bar"></div>
 								<span class="progress-text">{{ r.bar_text }}</span>

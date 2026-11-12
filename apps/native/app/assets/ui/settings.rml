@@ -17,8 +17,8 @@
 		<p class="err" data-if="app_form.error != ''">{{ app_form.error }}</p>
 
 		<div class="dlg-actions">
-			<button class="pill" data-event-click="close_dialog"><span>Cancel</span></button>
-			<button class="pill accent" data-event-click="submit_app_settings"><span>Save</span></button>
+			<button class="pill" data-event-click="close_dialog"><span>Cancel</span><span class="fade"></span></button>
+			<button class="pill accent" data-event-click="submit_app_settings"><span>Save</span><span class="fade"></span></button>
 		</div>
 	</div>
 	<div class="tooltip" data-if="tip_visible" data-style-left="tip_x" data-style-top="tip_y">{{ tip_text }}</div>

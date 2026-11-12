@@ -509,4 +509,36 @@ body.dark select selectarrow { decorator: image(../icons/dark/chevron-down.png c
 
 /* The label fills the button and is centered in it, so it lines up on every platform, whatever
    the font metrics are. */
-button.pill.pack-action > span { display: block; width: 100%; text-align: center; line-height: 30dp; }
+button.pill.pack-action > .label { display: block; width: 100%; text-align: center; line-height: 30dp; }
+
+/* ---- labels that do not fit: clipped at the button's edge, and faded out on the right ----
+   The fade is a gradient in the button's own colour, drawn over the right edge. Where the label
+   is short, the fade is over empty background, so it does not show. */
+button.pill { position: relative; overflow: hidden; }
+/* stops at the rounded end (15dp radius), so the curve is never covered */
+/* the fade shows only on a button whose label is too long (set by the UI) */
+button.pill > .fade { display: none; position: absolute; top: 0; bottom: 0; right: 15dp; width: 22dp;
+  decorator: horizontal-gradient(#D3D3D300 #D3D3D3); }
+button.pill:hover > .fade { decorator: horizontal-gradient(#C8C8C800 #C8C8C8); }
+button.pill.accent > .fade { decorator: horizontal-gradient(#D58AD600 #D58AD6); }
+button.pill.accent:hover > .fade { decorator: horizontal-gradient(#C877C900 #C877C9); }
+button.pill:disabled > .fade { decorator: horizontal-gradient(#BFBFBF00 #BFBFBF); }
+button.pill.accent:disabled > .fade { decorator: horizontal-gradient(#D4AED400 #D4AED4); }
+button.pill.chip:hover > .fade { decorator: horizontal-gradient(#D9434A00 #D9434A); }
+button.pill.ver.on > .fade { decorator: horizontal-gradient(#BAECB500 #BAECB5); }
+button.pill.ver.on:hover > .fade { decorator: horizontal-gradient(#B4E5B000 #B4E5B0); }
+
+body.dark button.pill > .fade { decorator: horizontal-gradient(#34363D00 #34363D); }
+body.dark button.pill:hover > .fade { decorator: horizontal-gradient(#40434C00 #40434C); }
+body.dark button.pill.accent > .fade { decorator: horizontal-gradient(#B064AE00 #B064AE); }
+body.dark button.pill.accent:hover > .fade { decorator: horizontal-gradient(#9C57A000 #9C57A0); }
+body.dark button.pill:disabled > .fade { decorator: horizontal-gradient(#3B3D4500 #3B3D45); }
+body.dark button.pill.accent:disabled > .fade { decorator: horizontal-gradient(#6E4A6C00 #6E4A6C); }
+body.dark button.pill.chip:hover > .fade { decorator: horizontal-gradient(#B93A3A00 #B93A3A); }
+body.dark button.pill.ver.on > .fade { decorator: horizontal-gradient(#2F5B3A00 #2F5B3A); }
+body.dark button.pill.ver.on:hover > .fade { decorator: horizontal-gradient(#376B4500 #376B45); }
+
+/* the export button sits in the narrow sidebar: less side padding gives the label more room */
+button.pill.pack-action { padding: 0 6dp; }
+
+button.pill.overflowing > .fade { display: block; }
