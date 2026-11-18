@@ -16,7 +16,7 @@
 
 namespace fs = std::filesystem;
 
-namespace et {
+namespace enchantment_tweaks {
 using nlohmann::json;
 
 namespace {
@@ -135,4 +135,4 @@ bool writeFile(const fs::path &path, const std::string &text) {
   return static_cast<bool>(out);
 }
 
-} // namespace et
+} // namespace enchantment_tweaks

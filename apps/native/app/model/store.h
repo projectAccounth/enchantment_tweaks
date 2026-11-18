@@ -8,7 +8,7 @@
 #include <utility>
 #include <vector>
 
-namespace et {
+namespace enchantment_tweaks {
 
 struct State {
   std::vector<std::string> available_versions;
@@ -61,7 +61,7 @@ class Store {
 public:
   using Listener = std::function<void(unsigned changes)>;
 
-  explicit Store(Catalog catalog,
+  explicit Store(const Catalog &catalog,
                  const std::optional<PersistedState> &persisted = std::nullopt);
 
   const State &state() const { return state_; }
@@ -98,4 +98,4 @@ private:
   std::vector<Listener> listeners_;
 };
 
-} // namespace et
+} // namespace enchantment_tweaks

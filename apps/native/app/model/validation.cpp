@@ -8,7 +8,7 @@
 #include <string_view>
 #include <vector>
 
-namespace et {
+namespace enchantment_tweaks {
 
 std::string trim(std::string_view s) {
   size_t a = 0, b = s.size();
@@ -85,4 +85,4 @@ validateNamespaceDraft(const std::string &label_in, const std::string &id_in,
   return std::nullopt;
 }
 
-} // namespace et
+} // namespace enchantment_tweaks

@@ -1,12 +1,12 @@
 #pragma once
 
+#include <cstdint>
 #include <optional>
 #include <string>
 #include <string_view>
 #include <vector>
 
-// TODO: Move these UI types into the main project namespace.
-namespace et {
+namespace enchantment_tweaks {
 
 struct Namespace {
   std::string id;
@@ -24,7 +24,7 @@ struct Item {
   std::string Key() const { return ns + ":" + id; }
 };
 
-enum class SortKey { NameAsc, NameDesc, Id, Created };
+enum class SortKey : uint8_t { NameAsc, NameDesc, Id, Created };
 
 const char *toString(SortKey key);
 std::optional<SortKey> sortKeyFromString(std::string_view s);
@@ -48,5 +48,4 @@ struct PackFile {
   std::string path;
   std::string text;
 };
-
-} // namespace et
+} // namespace enchantment_tweaks

@@ -113,9 +113,9 @@ void AppSession::setSort(const std::string &sort) {
   markDirty();
 }
 
-et::Catalog AppSession::uiCatalog() {
+Catalog AppSession::uiCatalog() {
   if (!catalog_) return {};
-  et::Catalog out = uiCache_;
+  Catalog out = uiCache_;
   // Pack projects can target any installed version.
   out.versions.clear();
   if (isPackProject()) {
@@ -327,7 +327,7 @@ std::string AppSession::supportedRangeText() const {
 void AppSession::closeCurrent() {
   project_ = project::Project{};
   catalog_.reset();
-  uiCache_ = et::Catalog{};
+  uiCache_ = Catalog{};
   projectPath_.reset();
   dirty_ = false;
 }

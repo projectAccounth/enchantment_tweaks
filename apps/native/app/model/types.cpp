@@ -2,7 +2,7 @@
 #include <optional>
 #include <string_view>
 
-namespace et {
+namespace enchantment_tweaks {
 
 const char *toString(SortKey key) {
   switch (key) {
@@ -26,4 +26,4 @@ std::optional<SortKey> sortKeyFromString(std::string_view s) {
   return std::nullopt;
 }
 
-} // namespace et
+} // namespace enchantment_tweaks

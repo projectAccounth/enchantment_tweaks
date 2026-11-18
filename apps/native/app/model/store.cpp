@@ -11,12 +11,11 @@
 #include <utility>
 #include <vector>
 
-namespace et {
+namespace enchantment_tweaks {
 
 namespace {
 int compare(const std::string &a, const std::string &b) {
-  const std::string la = enchantment_tweaks::text::asciiLower(a),
-                    lb = enchantment_tweaks::text::asciiLower(b);
+  const std::string la = text::asciiLower(a), lb = text::asciiLower(b);
   if (int c = la.compare(lb)) return c;
   return a.compare(b);
 }
@@ -35,7 +34,8 @@ template <class T> bool toggle(std::set<T> &set, const T &v) {
 }
 } // namespace
 
-Store::Store(Catalog catalog, const std::optional<PersistedState> &persisted)
+Store::Store(const Catalog &catalog,
+             const std::optional<PersistedState> &persisted)
     : state_(build(catalog, persisted)) {}
 
 State Store::build(const Catalog &catalog,
@@ -61,9 +61,8 @@ State Store::build(const Catalog &catalog,
       }
     }
     for (Item i : persisted->custom_items) {
-      const bool nsok =
-          std::any_of(s.namespaces.begin(), s.namespaces.end(),
-                      [&](const Namespace &n) { return n.id == i.ns; });
+      const bool nsok = std::ranges::any_of(
+          s.namespaces, [&](const auto &n) { return n.id == i.ns; });
       if (nsok && !hasItem(i.Key())) {
         i.custom = true;
         s.items.push_back(std::move(i));
@@ -175,7 +174,7 @@ CatalogView Store::getCatalogView() const {
   CatalogView view;
   view.query = trim(state_.query);
   view.filtering = !view.query.empty();
-  const std::string q = enchantment_tweaks::text::asciiLower(view.query);
+  const std::string q = text::asciiLower(view.query);
 
   auto cmp = [&](const Item &a, const Item &b) {
     switch (state_.sort) {
@@ -196,17 +195,19 @@ CatalogView Store::getCatalogView() const {
   };
 
   for (const Namespace &ns : state_.namespaces) {
-    SectionView sec{
-        ns, {}, {}, 0, state_.collapsed.count(collapse::Grid(ns.id)) == 0};
+    SectionView sec{.ns = ns,
+                    .items = {},
+                    .visible = {},
+                    .visible_count = 0,
+                    .open = state_.collapsed.count(collapse::Grid(ns.id)) == 0};
     for (const Item &i : state_.items)
       if (i.ns == ns.id) sec.items.push_back(i);
-    std::stable_sort(sec.items.begin(), sec.items.end(), cmp);
+    std::ranges::stable_sort(sec.items, cmp);
     for (const Item &i : sec.items) {
-      const bool match = !view.filtering ||
-                         enchantment_tweaks::text::asciiLower(i.name).find(q) !=
-                             std::string::npos ||
-                         enchantment_tweaks::text::asciiLower(i.id).find(q) !=
-                             std::string::npos;
+      const bool match =
+          !view.filtering ||
+          text::asciiLower(i.name).find(q) != std::string::npos ||
+          text::asciiLower(i.id).find(q) != std::string::npos;
       sec.visible.push_back(match);
       sec.visible_count += match;
     }
@@ -220,14 +221,15 @@ std::vector<CreatedGroup> Store::getCreatedGroups() const {
   std::vector<CreatedGroup> groups;
   for (const Namespace &ns : state_.namespaces) {
     CreatedGroup g{
-        ns, {}, state_.collapsed.count(collapse::CreatedGroup(ns.id)) == 0};
+        .ns = ns,
+        .items = {},
+        .open = state_.collapsed.count(collapse::CreatedGroup(ns.id)) == 0};
     for (const Item &i : state_.items)
       if (i.ns == ns.id && state_.created.count(i.Key())) g.items.push_back(i);
     if (g.items.empty()) continue;
-    std::stable_sort(g.items.begin(), g.items.end(),
-                     [](const Item &a, const Item &b) {
-                       return compare(a.name, b.name) < 0;
-                     });
+    std::ranges::stable_sort(g.items, [](const Item &a, const Item &b) {
+      return compare(a.name, b.name) < 0;
+    });
     groups.push_back(std::move(g));
   }
   return groups;
@@ -268,4 +270,4 @@ std::vector<std::string> Store::selectedVersions() const {
   return out;
 }
 
-} // namespace et
+} // namespace enchantment_tweaks

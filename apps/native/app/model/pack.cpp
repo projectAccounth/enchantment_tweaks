@@ -4,7 +4,7 @@
 #include <string>
 #include <vector>
 
-namespace et {
+namespace enchantment_tweaks {
 using nlohmann::json;
 
 std::vector<PackFile> buildPackFiles(const std::vector<std::string> &versions,
@@ -28,4 +28,4 @@ std::vector<PackFile> buildPackFiles(const std::vector<std::string> &versions,
   return files;
 }
 
-} // namespace et
+} // namespace enchantment_tweaks

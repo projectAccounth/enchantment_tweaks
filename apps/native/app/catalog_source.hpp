@@ -9,7 +9,7 @@
 namespace enchantment_tweaks::native {
 
 /// Builds the selector catalog, using the placeholder for items without icons.
-et::Catalog catalogFromItems(const catalog::ItemCatalog &source,
-                             const std::map<std::string, std::string> &icons);
+Catalog catalogFromItems(const catalog::ItemCatalog &source,
+                         const std::map<std::string, std::string> &icons);
 
 } // namespace enchantment_tweaks::native

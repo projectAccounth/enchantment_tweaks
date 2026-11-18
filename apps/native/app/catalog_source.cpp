@@ -22,9 +22,9 @@ std::string namespaceLabel(const std::string &ns) {
 
 } // namespace
 
-et::Catalog catalogFromItems(const catalog::ItemCatalog &source,
-                             const std::map<std::string, std::string> &icons) {
-  et::Catalog out;
+Catalog catalogFromItems(const catalog::ItemCatalog &source,
+                         const std::map<std::string, std::string> &icons) {
+  Catalog out;
   out.versions.push_back(source.gameVersion().empty() ? "unknown"
                                                       : source.gameVersion());
 
@@ -33,7 +33,7 @@ et::Catalog catalogFromItems(const catalog::ItemCatalog &source,
     if (seenNamespaces.insert(item.ns).second) {
       out.namespaces.push_back({item.ns, namespaceLabel(item.ns), false});
     }
-    et::Item ui;
+    Item ui;
 
     ui.ns = item.ns;
     ui.id = item.id;

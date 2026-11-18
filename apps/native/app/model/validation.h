@@ -5,7 +5,7 @@
 #include <string_view>
 #include <vector>
 
-namespace et {
+namespace enchantment_tweaks {
 
 std::string slugify(std::string_view s);
 
@@ -19,4 +19,4 @@ validateNamespaceDraft(const std::string &label, const std::string &id,
 
 std::string trim(std::string_view s);
 
-} // namespace et
+} // namespace enchantment_tweaks

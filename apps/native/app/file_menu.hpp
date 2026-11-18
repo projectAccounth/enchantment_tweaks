@@ -8,8 +8,8 @@
 
 namespace enchantment_tweaks::native {
 
-/// Builds the File menu for the current application state.
-std::vector<et::MenuEntry>
+/// Builds the File menu.
+std::vector<MenuEntry>
 buildFileMenu(const AppSession &session,
               const std::vector<project::InstalledGame> &games);
 

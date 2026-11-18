@@ -1,11 +1,17 @@
 #include "file_menu.hpp"
+#include "app/app_session.hpp"
+#include "app/ui/selector_ui.h"
+#include "core/project/game_versions.hpp"
+#include <string>
+#include <utility>
+#include <vector>
 
 namespace enchantment_tweaks::native {
 
 namespace {
 
-et::MenuEntry item(std::string label, std::string action, std::string arg = {},
-                   bool enabled = true) {
+MenuEntry item(std::string label, std::string action, std::string arg = {},
+               bool enabled = true) {
   // Keep these shortcuts in sync with HandleShortcut().
   static const std::pair<const char *, const char *> shortcuts[] = {
       {"open_pick_game", "Ctrl+N"}, {"open_project", "Ctrl+O"},
@@ -17,20 +23,25 @@ et::MenuEntry item(std::string label, std::string action, std::string arg = {},
   for (const auto &[name, keys] : shortcuts) {
     if (action == name) shortcut = keys;
   }
-  return et::MenuEntry{
-      std::move(label),   std::move(action), std::move(arg), enabled, false,
-      std::move(shortcut)};
+  return {.label = std::move(label),
+          .action = std::move(action),
+          .arg = std::move(arg),
+          .enabled = enabled,
+          .separator = false,
+          .shortcut = std::move(shortcut)};
 }
 
-et::MenuEntry separator() { return et::MenuEntry{{}, {}, {}, true, true}; }
+MenuEntry separator() {
+  return {
+      .label = {}, .action = {}, .arg = {}, .enabled = true, .separator = true};
+}
 
 } // namespace
 
-std::vector<et::MenuEntry>
+std::vector<MenuEntry>
 buildFileMenu(const AppSession &session,
               const std::vector<project::InstalledGame> &games) {
-  std::vector<et::MenuEntry> file;
-  // Use one menu entry; the dialog lists installed versions.
+  std::vector<MenuEntry> file;
   file.push_back(item("New game project from installed version...",
                       "open_pick_game", {}, !games.empty()));
   file.push_back(item("New game project from JAR...", "new_game_browse"));

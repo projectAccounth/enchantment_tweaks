@@ -8,22 +8,20 @@
 
 #include <filesystem>
 #include <map>
-#include <utility>
 #include <memory>
 #include <optional>
 #include <string>
+#include <utility>
 #include <vector>
 
 namespace enchantment_tweaks::native {
 namespace fs = std::filesystem;
 
-
 // Application state and actions used by the UI.
 class AppSession {
 public:
   // `assetsDirectory` points to shader overlays; empty disables them.
-  explicit AppSession(fs::path appDirectory,
-                      fs::path assetsDirectory = {});
+  explicit AppSession(fs::path appDirectory, fs::path assetsDirectory = {});
 
   [[nodiscard]] const project::AppSettings &appSettings() const noexcept {
     return appSettings_;
@@ -47,8 +45,7 @@ public:
   [[nodiscard]] const project::Project &project() const noexcept {
     return project_;
   }
-  [[nodiscard]] const std::optional<fs::path> &
-  projectPath() const noexcept {
+  [[nodiscard]] const std::optional<fs::path> &projectPath() const noexcept {
     return projectPath_;
   }
   [[nodiscard]] std::string gameVersion() const {
@@ -81,36 +78,32 @@ public:
     return appDirectory_ / "minecraft" / "versions";
   }
 
-  [[nodiscard]] et::Catalog uiCatalog();
+  [[nodiscard]] Catalog uiCatalog();
 
   // Prepare on the UI thread, perform on a worker, and commit on the UI thread.
   struct LoadRequest {
-    std::string label;       // shown while loading
-    project::Project target; // the project as it will be
-    std::optional<fs::path>
-        projectFile;               // set when a project file was opened
-    bool clearProjectFile = false; // a new project has no file yet
+    std::string label;                   // shown while loading
+    project::Project target;             // the project as it will be
+    std::optional<fs::path> projectFile; // set when a project file was opened
+    bool clearProjectFile = false;       // a new project has no file yet
     bool dirtyAfter = false;
   };
   struct LoadResult {
     bool ok = false;
     std::string error;
     std::shared_ptr<catalog::ItemCatalog> catalog;
-    et::Catalog ui;
+    Catalog ui;
   };
-  std::string prepareNewGame(const fs::path &jar,
-                             const std::string &versionId,
+  std::string prepareNewGame(const fs::path &jar, const std::string &versionId,
                              LoadRequest &out) const;
   std::string
   prepareNewPack(const fs::path &pack,
                  const std::vector<project::InstalledGame> &supported,
                  LoadRequest &out) const;
-  std::string prepareOpenProject(const fs::path &file,
-                                 LoadRequest &out) const;
+  std::string prepareOpenProject(const fs::path &file, LoadRequest &out) const;
   std::string prepareSupported(const std::vector<std::string> &ids,
                                LoadRequest &out) const;
-  std::string prepareOpenPack(const fs::path &zip,
-                              LoadRequest &out) const;
+  std::string prepareOpenPack(const fs::path &zip, LoadRequest &out) const;
   std::string prepareClosePack(LoadRequest &out) const;
   static LoadResult performLoad(const project::Project &target,
                                 const fs::path &appDirectory);
@@ -134,13 +127,11 @@ public:
   // Closes the overlay pack, or the project if no pack is open.
   void closeCurrent();
   // Reads and caches the target format for a game JAR.
-  [[nodiscard]] std::optional<int>
-  formatOf(const fs::path &jar) const;
+  [[nodiscard]] std::optional<int> formatOf(const fs::path &jar) const;
 
   // Writes selected items for a game project or all changes for a pack project.
-  catalog::ItemCatalog::SaveResult
-  exportPack(const fs::path &directory,
-             const std::string &fileName);
+  catalog::ItemCatalog::SaveResult exportPack(const fs::path &directory,
+                                              const std::string &fileName);
 
 private:
   conversion::ItemVariantOptions
@@ -155,7 +146,7 @@ private:
   std::shared_ptr<catalog::ItemCatalog> catalog_;
   bool dirty_ = false;
   mutable std::map<std::string, std::optional<int>> formatCache_;
-  et::Catalog
+  Catalog
       uiCache_; // the grid's catalog, built by the worker that loaded the game
 };
 
