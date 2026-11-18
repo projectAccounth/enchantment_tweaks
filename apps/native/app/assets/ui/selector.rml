@@ -40,10 +40,10 @@
 						<button class="pill ver" data-for="v : versions" data-class-on="v.on" data-event-click="toggle_version(v.label)">
 							<div class="ico sm check-ok" data-if="v.on"></div>
 							<span>{{ v.label }}</span>
-							<span class="fade"></span>
+							
 						</button>
 					</div>
-					<button class="pill more-versions" data-event-click="menu_action('open_download', '')"><span>Download more versions...</span><span class="fade"></span></button>
+					<button class="pill more-versions" data-event-click="menu_action('open_download', '')"><span>Download more versions...</span></button>
 				</div>
 			</div>
 
@@ -65,7 +65,7 @@
 								<button class="pill chip" data-for="c : g.chips" data-event-click="remove_item(c.key)">
 									<div class="ico sm x"></div>
 									<span class="label">{{ c.name }}</span>
-									<span class="fade"></span>
+									
 								</button>
 							</div>
 						</div>
@@ -76,7 +76,7 @@
 			<div class="side-rule"></div>
 			<div class="actions">
 				<div class="pill count"><span>{{ created_label }}</span></div>
-				<button class="pill accent pack-action" data-class-disabled="!can_export" data-event-click="export"><span class="label">Export Pack</span><span class="fade"></span></button>
+				<button class="pill accent pack-action" data-class-disabled="!can_export" data-event-click="export"><span class="label">Export Pack</span></button>
 			</div>
 			<p class="hint" data-if="!can_export">{{ export_hint }}</p>
 		</div>
@@ -90,17 +90,17 @@
 					<input type="text" id="search" data-value="query" maxlength="64"/>
 					<span class="placeholder" data-if="query == ''">Search...</span>
 				</div>
-				<button class="pill with-icon" data-event-click="open_item_dialog"><div class="ico plus"></div><span>Add Item</span><span class="fade"></span></button>
-				<button class="pill with-icon accent" data-event-click="open_ns_dialog"><div class="ico plus"></div><span>Add Namespace</span><span class="fade"></span></button>
+				<button class="pill with-icon" data-event-click="open_item_dialog"><div class="ico plus"></div><span>Add Item</span></button>
+				<button class="pill with-icon accent" data-event-click="open_ns_dialog"><div class="ico plus"></div><span>Add Namespace</span></button>
 			</div>
 
 			<div class="sortrow">
 				<button class="pill with-icon sort" data-event-click="toggle_sort_menu">
 					<div class="ico chev" data-class-collapsed="!sort_open"></div>
 					<span>Sort By</span>
-					<span class="fade"></span>
+					
 				</button>
-				<button class="pill group-toggle" data-event-click="menu_action('cycle_group', '')" data-event-mouseover="show_tip('group')" data-event-mouseout="hide_tip"><span>{{ group_label }}</span><span class="fade"></span></button>
+				<button class="pill group-toggle" data-event-click="menu_action('cycle_group', '')" data-event-mouseover="show_tip('group')" data-event-mouseout="hide_tip"><span>{{ group_label }}</span></button>
 				<div class="menu" data-if="sort_open">
 					<button data-for="o : sort_options" data-event-click="set_sort(o.key)">
 						<div class="ico check" data-class-off="!o.checked"></div>

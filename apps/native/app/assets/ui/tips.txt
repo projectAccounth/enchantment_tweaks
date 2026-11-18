@@ -1,0 +1,10 @@
+thickness = Depth of the item's sprite, in model pixels. A larger value gives a thicker edge. 1 is the default.
+outline_size = Width of the outline drawn around the item, in model pixels. 0 means no outline.
+outline_color = Color of the outline, as six hex digits (rrggbb). ffffff is white.
+unenchanted = Also outlines items without an enchantment. When off, unenchanted items keep their original model.
+unshaded = The unenchanted outlined model is drawn without shading. Only applies when unenchanted outlines are on. Enchanted models are always unshaded.
+merge = Merges horizontal runs of opaque pixels into one element. The file is smaller, but it can change the look in some packs. Only generated items are merged; custom 3D models are never merged.
+custom = Custom 3D model (experimental). Its elements are kept as they are, and its textures get unshaded copies for the glow. It is not outlined.
+dark = Color theme for every window.
+group = Splits each namespace into sub-groups by name: prefix (Wooden, Iron, Oak...) or suffix (Sword, Axe, Hoe...). Changes only the display, not the export.
+supported = The game versions this pack supports. Its item data comes from the newest selected version.

@@ -27,27 +27,27 @@
 
 		<div class="field">
 			<label data-event-mouseover="show_tip('unenchanted')" data-event-mouseout="hide_tip">Unenchanted outlines</label>
-			<button class="pill toggle" data-class-on="project_form.unenchanted" data-event-click="toggle_project_setting('unenchanted')"><span>{{ project_form.unenchanted ? 'On' : 'Off' }}</span><span class="fade"></span></button>
+			<button class="pill toggle" data-class-on="project_form.unenchanted" data-event-click="toggle_project_setting('unenchanted')"><span>{{ project_form.unenchanted ? 'On' : 'Off' }}</span></button>
 					<p class="field-hint">Also outlines items without an enchantment. When off, they keep their original model.</p>
 		</div>
 
 		<div class="field">
 			<label data-event-mouseover="show_tip('unshaded')" data-event-mouseout="hide_tip">Unshaded unenchanted models</label>
-			<button class="pill toggle" data-class-on="project_form.unshaded" data-event-click="toggle_project_setting('unshaded')"><span>{{ project_form.unshaded ? 'On' : 'Off' }}</span><span class="fade"></span></button>
+			<button class="pill toggle" data-class-on="project_form.unshaded" data-event-click="toggle_project_setting('unshaded')"><span>{{ project_form.unshaded ? 'On' : 'Off' }}</span></button>
 					<p class="field-hint">Needs Unenchanted outlines. Enchanted models are always unshaded.</p>
 		</div>
 
 		<div class="field">
 			<label data-event-mouseover="show_tip('merge')" data-event-mouseout="hide_tip">Merge runs <span class="opt">(generated items only)</span></label>
-			<button class="pill toggle" data-class-on="project_form.merge" data-event-click="toggle_project_setting('merge')"><span>{{ project_form.merge ? 'On' : 'Off' }}</span><span class="fade"></span></button>
+			<button class="pill toggle" data-class-on="project_form.merge" data-event-click="toggle_project_setting('merge')"><span>{{ project_form.merge ? 'On' : 'Off' }}</span></button>
 			<p class="field-hint">Smaller file, may change the look in some packs. Custom 3D models are never merged.</p>
 		</div>
 
 		<p class="err" data-if="project_form.error != ''">{{ project_form.error }}</p>
 
 		<div class="dlg-actions">
-			<button class="pill" data-event-click="close_dialog"><span>Cancel</span><span class="fade"></span></button>
-			<button class="pill accent" data-event-click="submit_project_settings"><span>Save project settings</span><span class="fade"></span></button>
+			<button class="pill" data-event-click="close_dialog"><span>Cancel</span></button>
+			<button class="pill accent" data-event-click="submit_project_settings"><span>Save project settings</span></button>
 		</div>
 	</div>
 	<div class="tooltip" data-if="tip_visible" data-style-left="tip_x" data-style-top="tip_y">{{ tip_text }}</div>
