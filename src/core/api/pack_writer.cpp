@@ -1,6 +1,7 @@
 #include "core/api/pack_writer.hpp"
 
 #include "core/api/item_conversion.hpp"
+#include "core/types/common.hpp"
 #include "core/util/string.hpp"
 #include "core/util/zip_writer.hpp"
 
@@ -72,18 +73,16 @@ void PackBuilder::addItem(const ConvertedItem &item) {
   }
 }
 
-// TODO: convert to use json, this is just baseline JSON
 std::vector<OutputFile> PackBuilder::files() const {
-  std::string mcmeta =
-      "{\n  \"pack\": {\n    \"description\": \"" + description_ +
-      "\",\n    \"pack_format\": " + std::to_string(packFormat_);
+
+  json pack;
+  pack["description"] = description_;
+  pack["pack_format"] = packFormat_;
   if (supported_) {
-    mcmeta += ",\n    \"supported_formats\": {\"min_inclusive\": " +
-              std::to_string(supported_->first) +
-              ", \"max_inclusive\": " + std::to_string(supported_->second) +
-              "}";
+    pack["supported_formats"] = {{"min_inclusive", supported_->first},
+                                 {"max_inclusive", supported_->second}};
   }
-  mcmeta += "\n  }\n}\n";
+  const std::string mcmeta = json{{"pack", pack}}.dump(2) + "\n";
   std::vector<OutputFile> all;
   all.push_back({"pack.mcmeta", {mcmeta.begin(), mcmeta.end()}});
   all.insert(all.end(), files_.begin(), files_.end());
