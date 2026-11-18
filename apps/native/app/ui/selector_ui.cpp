@@ -13,6 +13,8 @@
 #include "app/model/store.h"
 #include "app/model/types.h"
 #include "core/api/item_groups.hpp"
+#include "core/util/debug.hpp"
+#include "core/util/file_io.hpp"
 #include "core/util/text.hpp"
 #include <algorithm>
 #include <cctype>
@@ -32,7 +34,7 @@
 
 namespace fs = std::filesystem;
 
-namespace et {
+namespace enchantment_tweaks {
 
 namespace {
 
@@ -60,12 +62,6 @@ Rml::String Arg0(const Rml::VariantList &args) {
 
 } // namespace
 
-bool IsExistingAbsoluteFile(const std::string &path) {
-  const fs::path p(path);
-  std::error_code ec;
-  return p.is_absolute() && !p.has_root_name() && fs::is_regular_file(p, ec);
-}
-
 Rml::String SelectorUi::ResolveIcon(const std::string &icon) const {
   if (icon.empty() || icon.starts_with("data:"))
     return "../sprites/placeholder.png";
@@ -78,7 +74,9 @@ Rml::String SelectorUi::ResolveIcon(const std::string &icon) const {
 SelectorUi::SelectorUi(Rml::Context *context, Store &store,
                        UiCallbacks callbacks, std::string assetDir)
     : ctx_(context), store_(store), cb_(std::move(callbacks)),
-      asset_dir_(std::move(assetDir)) {}
+      asset_dir_(std::move(assetDir)) {
+  LoadTips(asset_dir_);
+}
 
 SelectorUi::~SelectorUi() {
   if (!ctx_) return;
@@ -498,7 +496,7 @@ void SelectorUi::BindEvents(Rml::DataModelConstructor &c) {
       return;
     }
     const std::string color = override_form_.outline_color;
-    if (!enchantment_tweaks::text::isHexColor(color)) {
+    if (!text::isHexColor(color)) {
       override_form_.error =
           "Outline color must be six hex digits, like ffffff.";
       Dirty("override_form");
@@ -615,21 +613,18 @@ void SelectorUi::Refresh() {
       continue;
     }
 
-    const enchantment_tweaks::catalog::GroupMode mode =
-        enchantment_tweaks::catalog::groupModeFromString(group_mode_);
+    const catalog::GroupMode mode = catalog::groupModeFromString(group_mode_);
 
     std::map<std::string, std::vector<CardVm>> byLabel;
 
     for (const auto &card : vm.cards) {
-      byLabel[enchantment_tweaks::catalog::groupLabelFor(std::string(card.name),
-                                                         mode)]
-          .push_back(card);
+      byLabel[catalog::groupLabelFor(std::string(card.name), mode)].push_back(
+          card);
     }
 
-    const auto &keywords =
-        mode == enchantment_tweaks::catalog::GroupMode::Prefix
-            ? enchantment_tweaks::catalog::prefixKeywords()
-            : enchantment_tweaks::catalog::suffixKeywords();
+    const auto &keywords = mode == catalog::GroupMode::Prefix
+                               ? catalog::prefixKeywords()
+                               : catalog::suffixKeywords();
 
     std::vector<std::string> order = keywords;
 
@@ -659,7 +654,7 @@ void SelectorUi::Refresh() {
   for (const auto &sec : sections_) {
     std::vector<std::string> keys;
     for (const auto &card : sec.cards) {
-      if (card.visible) keys.push_back(std::string(card.key));
+      if (card.visible) keys.emplace_back(card.key);
     }
     section_keys_[sec.collapse_key] = std::move(keys);
   }
@@ -675,8 +670,8 @@ void SelectorUi::Refresh() {
   created_label_ = std::to_string(s.created.size()) + " created";
   can_export_ = !s.created.empty() && !s.versions.empty();
   export_hint_ = s.created.empty()    ? "Select at least one item first"
-                   : s.versions.empty() ? "Select at least one version first"
-                                        : "";
+                 : s.versions.empty() ? "Select at least one version first"
+                                      : "";
 
   static const struct {
     SortKey key;
@@ -699,8 +694,8 @@ void SelectorUi::Refresh() {
   // The search box owns `query`; rewriting it would move the caret.
   for (const char *name :
        {"versions", "versions_collapsed", "created_groups", "created_collapsed",
-        "created_label", "can_export", "export_hint", "sections",
-        "no_match", "no_match_text", "sort_options", "namespaces"})
+        "created_label", "can_export", "export_hint", "sections", "no_match",
+        "no_match_text", "sort_options", "namespaces"})
     Dirty(name);
 }
 
@@ -849,27 +844,7 @@ void SelectorUi::UpdateGridColumns() {
   }
 }
 
-// Marks each pill button whose label is wider than the button, so only those show the fade.
-// Runs a few times a second: the layout is current by then, and it costs one query per pill.
-void SelectorUi::UpdateOverflowFades(double dt) {
-  fade_timer_ += dt;
-  if (fade_timer_ < 0.25 || !main_doc_) return;
-  fade_timer_ = 0.0;
-  Rml::ElementList buttons;
-  main_doc_->QuerySelectorAll(buttons, "button.pill");
-  for (Rml::Element *button : buttons) {
-    // The label is the first span; the fade, which is also a span, comes after it.
-    Rml::Element *label = button->QuerySelector("span");
-    if (!label) continue;
-    const bool overflowing = label->GetOffsetWidth() > button->GetClientWidth();
-    if (overflowing != button->IsClassSet("overflowing")) {
-      button->SetClass("overflowing", overflowing);
-    }
-  }
-}
-
 void SelectorUi::Update(double dt) {
-  UpdateOverflowFades(dt);
   // Update the visible window after scrolling or resizing.
   if (!main_el_ && main_doc_) main_el_ = main_doc_->QuerySelector(".main");
   if (main_el_) {
@@ -1266,8 +1241,7 @@ SelectorUi::GridStats SelectorUi::GridStatistics() const {
 }
 
 void SelectorUi::SetGroupMode(const std::string &mode) {
-  group_mode_ = enchantment_tweaks::catalog::groupModeToString(
-      enchantment_tweaks::catalog::groupModeFromString(mode));
+  group_mode_ = catalog::groupModeToString(catalog::groupModeFromString(mode));
   group_label_ = Rml::String(group_mode_ == "none" ? "Group: off"
                                                    : "Group: " + group_mode_);
   Dirty("group_label");
@@ -1318,41 +1292,27 @@ void SelectorUi::ToggleAppSetting(const std::string &name) {
   Dirty("app_form");
 }
 
-std::string SelectorUi::TipText(const std::string &key) {
+void SelectorUi::LoadTips(const std::string &assetDir) {
+  tips_.clear();
+  const auto text =
+      file_io::readText(std::filesystem::path(assetDir) / "ui" / "tips.txt");
+  if (!text) {
+    debug::Logger::warning() << "tips file not found in " << assetDir;
+    return;
+  }
+  std::istringstream lines(*text);
+  std::string line;
+  while (std::getline(lines, line)) {
+    if (line.empty() || line[0] == '#') continue;
+    const auto separator = line.find(" = ");
+    if (separator == std::string::npos) continue;
+    tips_[line.substr(0, separator)] = line.substr(separator + 3);
+  }
+}
 
-  /// TODO: Move this text to a resource file.
-  if (key == "thickness")
-    return "Depth of the item's sprite, in model pixels. A larger value gives "
-           "a thicker edge. 1 is the default.";
-  if (key == "outline_size")
-    return "Width of the outline drawn around the item, in model pixels. 0 "
-           "means no outline.";
-  if (key == "outline_color")
-    return "Color of the outline, as six hex digits (rrggbb). ffffff is white.";
-  if (key == "unenchanted")
-    return "Also outlines items without an enchantment. When off, unenchanted "
-           "items keep their original model.";
-  if (key == "unshaded")
-    return "The unenchanted outlined model is drawn without shading. Only "
-           "applies when unenchanted outlines are on. Enchanted models are "
-           "always unshaded.";
-  if (key == "merge")
-    return "Merges horizontal runs of opaque pixels into one element. The file "
-           "is smaller, but it can change the look in some packs. Only "
-           "generated items are merged; custom 3D models are never merged.";
-  if (key == "custom")
-    return "Custom 3D model (experimental). Its elements are kept as they are, "
-           "and its textures get unshaded copies for the glow. It is not "
-           "outlined.";
-  if (key == "dark") return "Color theme for every window.";
-  if (key == "group")
-    return "Splits each namespace into sub-groups by name: prefix (Wooden, "
-           "Iron, Oak...) or suffix (Sword, Axe, Hoe...). Changes only the "
-           "display, not the export.";
-  if (key == "supported")
-    return "The game versions this pack supports. Its item data comes from the "
-           "newest selected version.";
-  return {};
+std::string SelectorUi::TipText(const std::string &key) const {
+  const auto found = tips_.find(key);
+  return found == tips_.end() ? std::string() : found->second;
 }
 
 void SelectorUi::ToggleOverride(const std::string &name) {
@@ -1400,7 +1360,7 @@ void SelectorUi::SubmitProjectSettings() {
     return;
   }
   const std::string color = project_form_.outline_color;
-  if (!enchantment_tweaks::text::isHexColor(color)) {
+  if (!text::isHexColor(color)) {
     project_form_.error = "Outline color must be six hex digits, like ffffff.";
     Dirty("project_form");
     return;
@@ -1413,4 +1373,4 @@ void SelectorUi::SubmitProjectSettings() {
   CloseDialog();
 }
 
-} // namespace et
+} // namespace enchantment_tweaks

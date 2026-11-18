@@ -17,7 +17,7 @@
 namespace enchantment_tweaks::native {
 namespace fs = std::filesystem;
 
-using SelectorCallbacks = et::UiCallbacks;
+using SelectorCallbacks = UiCallbacks;
 
 struct ApplicationConfig {
   fs::path assets_directory;
@@ -40,8 +40,8 @@ public:
   int run();
   void requestClose() noexcept;
 
-  et::Store &store();
-  const et::Store &store() const;
+  Store &store();
+  const Store &store() const;
 
 private:
   struct Impl;

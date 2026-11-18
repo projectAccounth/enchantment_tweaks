@@ -17,7 +17,7 @@
 #include <string>
 #include <vector>
 
-namespace et {
+namespace enchantment_tweaks {
 
 struct SavePackRequest {
   std::string suggested_name;
@@ -30,9 +30,6 @@ struct SavePackResult {
   std::string path; // shown in the toast when set
   std::string error;
 };
-
-// TODO: Move this helper out of the UI header.
-bool IsExistingAbsoluteFile(const std::string &path);
 
 using AppSettingsValues = enchantment_tweaks::project::AppSettings;
 using ItemOptionsValues = enchantment_tweaks::project::ItemOptions;
@@ -80,8 +77,6 @@ public:
   /// Initializes the UI and its data model.
   bool Initialize();
   void Update(double dt);
-  void UpdateOverflowFades(double dt);
-  double fade_timer_ = 0.0;
   /// Returns the delay until another update is needed.
   double NextUpdateDelay() const;
 
@@ -270,7 +265,9 @@ private:
   };
   Rml::String tip_text_, tip_x_ = "0px", tip_y_ = "0px";
   bool tip_visible_ = false;
-  static std::string TipText(const std::string &key);
+  std::string TipText(const std::string &key) const;
+  void LoadTips(const std::string &assetDir);
+  std::map<std::string, std::string> tips_; // ui/tips.txt
   OverrideFormVm override_form_;
   std::vector<std::string> override_targets_;
 
@@ -382,4 +379,4 @@ private:
   double toast_remaining_ = 0;
 };
 
-} // namespace et
+} // namespace enchantment_tweaks

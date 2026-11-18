@@ -15,6 +15,7 @@
 #include "core/project/project_file.hpp"
 #include "core/project/version_list.hpp"
 #include "core/util/debug.hpp"
+#include "core/util/file_io.hpp"
 #include "core/util/platform/mem.hpp"
 #include "file_dialogs.hpp"
 
@@ -57,6 +58,7 @@
 #include <memory>
 #include <stdexcept>
 #include <string>
+#include <unordered_map>
 #include <utility>
 
 namespace fs = std::filesystem;
@@ -97,7 +99,7 @@ public:
   }
   void JoinPath(Rml::String &out, const Rml::String &document,
                 const Rml::String &path) override {
-    if (et::IsExistingAbsoluteFile(path)) {
+    if (file_io::isExistingAbsoluteFile(path)) {
       out = path;
       return;
     }
@@ -118,7 +120,7 @@ bool loadFonts(const fs::path &assets) {
 
 namespace {
 
-et::Catalog emptyCatalog() { return et::Catalog{}; }
+Catalog emptyCatalog() { return Catalog{}; }
 
 } // namespace
 

@@ -22,6 +22,12 @@ std::optional<std::string> readText(const fs::path &path) {
                      std::istreambuf_iterator<char>());
 }
 
+bool isExistingAbsoluteFile(const std::string &path) {
+  const fs::path p(path);
+  std::error_code ec;
+  return p.is_absolute() && !p.has_root_name() && fs::is_regular_file(p, ec);
+}
+
 std::optional<std::vector<uint8_t>>
 readBytes(const fs::path &path) {
   std::ifstream in(path, std::ios::binary);
