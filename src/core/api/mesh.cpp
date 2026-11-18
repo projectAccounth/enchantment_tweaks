@@ -299,8 +299,8 @@ Model MeshBuilder::build(const BuildOptions &options) const {
     }
   }
 
-  // TODO: do item-specific display later
-  model.display = defaultDisplay();
+  // The source model's display is kept; the defaults apply only when it has none.
+  model.display = options.baseDisplay.empty() ? defaultDisplay() : options.baseDisplay;
 
   for (const auto &[k, v] : options.overrideTransforms) {
     model.display[k] = v;

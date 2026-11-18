@@ -150,11 +150,11 @@ struct Application::Impl {
     if (config_.assets_directory.empty())
       throw std::invalid_argument("Application requires assets_directory");
 
-    callbacks_.persist = [this](const et::PersistedState &state) {
+    callbacks_.persist = [this](const PersistedState &state) {
       // Session synchronization is not a user change.
       if (syncing_) return;
       session_.setSelection(state.created.value_or(std::vector<std::string>{}));
-      if (state.sort) session_.setSort(et::toString(*state.sort));
+      if (state.sort) session_.setSort(toString(*state.sort));
       if (state.versions && session_.isPackProject()) {
         std::vector<std::string> wanted = *state.versions;
         std::vector<std::string> current = session_.supportedVersions();
@@ -178,19 +178,19 @@ struct Application::Impl {
     };
 
     callbacks_.save_pack =
-        [this](const et::SavePackRequest &request) -> et::SavePackResult {
-      if (!session_.hasProject()) return et::SavePackResult{};
+        [this](const SavePackRequest &request) -> SavePackResult {
+      if (!session_.hasProject()) return SavePackResult{};
       const auto target = dialogs_.saveFile({"zip"}, request.suggested_name,
                                             config_.app_directory);
       if (!target)
-        return et::SavePackResult{.saved = false, .path = {}, .error = {}};
+        return SavePackResult{.saved = false, .path = {}, .error = {}};
       std::string fileName = target->filename().string();
       if (target->extension() != ".zip") fileName += ".zip";
       const auto outcome = session_.exportPack(target->parent_path(), fileName);
       if (outcome.saved) refreshMenu();
-      return et::SavePackResult{.saved = outcome.saved,
-                                .path = outcome.path.string(),
-                                .error = outcome.error};
+      return SavePackResult{.saved = outcome.saved,
+                            .path = outcome.path.string(),
+                            .error = outcome.error};
     };
 
     callbacks_.menu_action = [this](const std::string &action,
@@ -198,23 +198,22 @@ struct Application::Impl {
       handleMenu(action, arg);
     };
 
-    callbacks_.app_settings_changed =
-        [this](const et::AppSettingsValues &values) {
-          auto next = values;
-          next.groupMode =
-              session_.appSettings()
-                  .groupMode; // the grid's grouping is not in this dialog
-          const auto error = session_.setAppSettings(next);
-          if (ui_) {
-            ui_->SetAppSettings(session_.appSettings());
-            ui_->ShowToast(error.empty() ? "Application settings saved"
-                                         : "Could not save settings: " + error);
-          }
-        };
+    callbacks_.app_settings_changed = [this](const AppSettingsValues &values) {
+      auto next = values;
+      next.groupMode =
+          session_.appSettings()
+              .groupMode; // the grid's grouping is not in this dialog
+      const auto error = session_.setAppSettings(next);
+      if (ui_) {
+        ui_->SetAppSettings(session_.appSettings());
+        ui_->ShowToast(error.empty() ? "Application settings saved"
+                                     : "Could not save settings: " + error);
+      }
+    };
 
     callbacks_.item_override_changed =
         [this](const std::vector<std::string> &keys,
-               const et::ItemOverrideValues &values, bool reset) {
+               const ItemOverrideValues &values, bool reset) {
           if (reset) {
             session_.clearOverrides(keys);
           } else {
@@ -230,12 +229,11 @@ struct Application::Impl {
           refreshMenu();
         };
 
-    callbacks_.item_options_changed =
-        [this](const et::ItemOptionsValues &values) {
-          const auto error = session_.setOptions(values);
-          if (ui_ && !error.empty()) ui_->ShowToast(error, 6);
-          refreshMenu();
-        };
+    callbacks_.item_options_changed = [this](const ItemOptionsValues &values) {
+      const auto error = session_.setOptions(values);
+      if (ui_ && !error.empty()) ui_->ShowToast(error, 6);
+      refreshMenu();
+    };
   }
 
   // Prevent session updates from being read back as user changes.
@@ -251,7 +249,7 @@ struct Application::Impl {
               : std::vector<std::string>{session_.gameVersion()});
     }
     store_.setCreated(session_.selection());
-    if (const auto sort = et::sortKeyFromString(session_.sort()))
+    if (const auto sort = sortKeyFromString(session_.sort()))
       store_.setSort(*sort);
     syncing_ = false;
     refreshMenu();
@@ -330,16 +328,16 @@ struct Application::Impl {
     for (const auto &status : downloads_.snapshot())
       live[status.id] = status;
 
-    std::vector<et::SelectorUi::RemoteGroupChoice> choices;
+    std::vector<SelectorUi::RemoteGroupChoice> choices;
     for (const auto &group : groups) {
-      et::SelectorUi::RemoteGroupChoice g;
+      SelectorUi::RemoteGroupChoice g;
       g.type = group.type;
       g.total = group.total;
       g.matches = group.matches;
       g.open = group.open;
       g.truncated = group.truncated;
       for (const auto &row : group.rows) {
-        et::SelectorUi::RemoteRowChoice r;
+        SelectorUi::RemoteRowChoice r;
         r.id = row.id;
         r.type = row.type;
         r.button =
@@ -773,7 +771,7 @@ struct Application::Impl {
 
   void refreshSupportedVersions() {
     if (!ui_) return;
-    std::vector<et::SelectorUi::VersionChoice> choices;
+    std::vector<SelectorUi::VersionChoice> choices;
     for (const auto &game : session_.installedGames()) {
       const auto &supported = session_.supportedVersions();
       choices.push_back(
@@ -801,145 +799,286 @@ struct Application::Impl {
     refreshSupportedVersions();
   }
 
+  // Menu action -> handler. Each handler does its work and returns an error
+  // text (empty when there is none), which is shown as a toast.
+  using MenuHandler = std::function<std::string(const std::string &)>;
+  std::unordered_map<std::string, MenuHandler> menuHandlers_;
+
+  void registerMenuHandlers() {
+    menuHandlers_ = {
+        {"open_download",
+         [this](const std::string &arg) -> std::string {
+           std::string error;
+
+           openDownloadDialog();
+           return error;
+           return error;
+         }},
+        {"item_options",
+         [this](const std::string &arg) -> std::string {
+           std::string error;
+
+           if (ui_ && !arg.empty()) {
+             const auto o = session_.overrideFor(arg);
+             const auto merged = project::applyOverride(session_.options(), o);
+             ItemOverrideValues v;
+             v.thicknessPx = merged.thicknessPx;
+             v.outlineSizePx = merged.outlineSizePx;
+             v.outlineColor = merged.outlineColor;
+             v.unenchantedOutline = merged.unenchantedOutline;
+             v.unenchantedUnshaded = merged.unenchantedUnshaded;
+             v.mergeColumns = merged.mergeColumns;
+             ui_->SetItemOverrideValues(v);
+             ui_->OpenItemOptionsDialog();
+           }
+           return error;
+           return error;
+         }},
+        {"cycle_group",
+         [this](const std::string &arg) -> std::string {
+           std::string error;
+
+           project::AppSettings next = session_.appSettings();
+           next.groupMode =
+               next.groupMode == "none"
+                   ? "prefix"
+                   : (next.groupMode == "prefix" ? "suffix" : "none");
+           showError(session_.setAppSettings(next));
+           if (ui_) ui_->SetGroupMode(next.groupMode);
+           return error;
+           return error;
+         }},
+        {"open_pick_game",
+         [this](const std::string &arg) -> std::string {
+           std::string error;
+
+           if (ui_) {
+             std::vector<SelectorUi::InstalledChoice> choices;
+             for (const auto &game : session_.installedGames()) {
+               choices.push_back({game.id, game.jar.string()});
+             }
+             ui_->SetInstalledGames(choices);
+             ui_->OpenPickGameDialog();
+           }
+           return error;
+           return error;
+         }},
+        {"remote_search",
+         [this](const std::string &arg) -> std::string {
+           std::string error;
+
+           remoteQuery_ = arg;
+           refreshRemoteView();
+           return error;
+           return error;
+         }},
+        {"remote_snapshots",
+         [this](const std::string &arg) -> std::string {
+           std::string error;
+
+           includeSnapshots_ = !includeSnapshots_;
+           refreshRemoteView();
+           return error;
+           return error;
+         }},
+        {"remote_toggle",
+         [this](const std::string &arg) -> std::string {
+           std::string error;
+
+           if (!openTypes_.insert(arg).second) openTypes_.erase(arg);
+           refreshRemoteView();
+           return error;
+           return error;
+         }},
+        {"download_version",
+         [this](const std::string &arg) -> std::string {
+           std::string error;
+
+           enqueueDownload(arg);
+           return error;
+           return error;
+         }},
+        {"cancel_download",
+         [this](const std::string &arg) -> std::string {
+           std::string error;
+
+           downloads_.cancel(arg);
+           refreshRemoteView();
+           return error;
+           return error;
+         }},
+        {"uninstall_version",
+         [this](const std::string &arg) -> std::string {
+           std::string error;
+
+           uninstall(arg);
+           return error;
+           return error;
+         }},
+        {"toggle_supported",
+         [this](const std::string &arg) -> std::string {
+           std::string error;
+
+           toggleSupported(arg);
+           return error;
+           return error;
+         }},
+        {"new_game_project",
+         [this](const std::string &arg) -> std::string {
+           std::string error;
+
+           if (ui_) ui_->CloseDialog();
+           const fs::path jar(arg);
+           AppSession::LoadRequest request;
+           error = session_.prepareNewGame(
+               jar, jar.parent_path().filename().string(), request);
+           if (error.empty()) beginLoad(request);
+           return error;
+         }},
+        {"new_game_browse",
+         [this](const std::string &arg) -> std::string {
+           std::string error;
+
+           if (ui_) ui_->CloseDialog();
+           if (const auto jar =
+                   dialogs_.openFile({"jar", "zip"}, config_.app_directory)) {
+             AppSession::LoadRequest request;
+             error =
+                 session_.prepareNewGame(*jar, jar->stem().string(), request);
+             if (error.empty()) beginLoad(request);
+           }
+           return error;
+         }},
+        {"new_pack_zip",
+         [this](const std::string &arg) -> std::string {
+           std::string error;
+
+           newPackProject(dialogs_.openFile({"zip"}, config_.app_directory));
+           return error;
+         }},
+        {"new_pack_folder",
+         [this](const std::string &arg) -> std::string {
+           std::string error;
+
+           newPackProject(dialogs_.pickFolder(config_.app_directory));
+           return error;
+         }},
+        {"open_project",
+         [this](const std::string &arg) -> std::string {
+           std::string error;
+
+           if (const auto file =
+                   dialogs_.openFile({"etproj"}, config_.app_directory)) {
+             AppSession::LoadRequest request;
+             error = session_.prepareOpenProject(*file, request);
+             if (error.empty()) beginLoad(request);
+           }
+           return error;
+         }},
+        {"save_project",
+         [this](const std::string &arg) -> std::string {
+           std::string error;
+
+           error =
+               session_.hasProjectFile() ? session_.saveProject() : saveAs();
+           return error;
+         }},
+        {"save_project_as",
+         [this](const std::string &arg) -> std::string {
+           std::string error;
+
+           error = saveAs();
+           return error;
+         }},
+        {"open_pack",
+         [this](const std::string &arg) -> std::string {
+           std::string error;
+
+           if (const auto zip =
+                   dialogs_.openFile({"zip"}, config_.app_directory)) {
+             AppSession::LoadRequest request;
+             error = session_.prepareOpenPack(*zip, request);
+             if (error.empty()) beginLoad(request);
+           }
+           return error;
+         }},
+        {"close_pack",
+         [this](const std::string &arg) -> std::string {
+           std::string error;
+
+           if (session_.hasPack() && !session_.isPackProject()) {
+             AppSession::LoadRequest request;
+             error = session_.prepareClosePack(request);
+             if (error.empty()) beginLoad(request);
+           } else {
+             session_.closeCurrent();
+             refreshStore();
+           }
+           return error;
+         }},
+        {"export_pack",
+         [this](const std::string &arg) -> std::string {
+           std::string error;
+
+           error = exportPack();
+           return error;
+         }},
+        {"open_app_settings",
+         [this](const std::string &arg) -> std::string {
+           std::string error;
+
+           if (ui_) {
+             ui_->SetAppSettings(session_.appSettings());
+             ui_->OpenAppSettingsDialog();
+           }
+           return error;
+           return error;
+         }},
+        {"open_project_settings",
+         [this](const std::string &arg) -> std::string {
+           std::string error;
+
+           openProjectSettings();
+           return error;
+           return error;
+         }},
+        {"quit",
+         [this](const std::string &arg) -> std::string {
+           std::string error;
+
+           requestQuit();
+           return error;
+           return error;
+         }},
+        {"unsaved_cancel",
+         [this](const std::string &) {
+           answerUnsaved("unsaved_cancel");
+           return std::string();
+         }},
+        {"unsaved_dont_save",
+         [this](const std::string &) {
+           answerUnsaved("unsaved_dont_save");
+           return std::string();
+         }},
+        {"unsaved_save",
+         [this](const std::string &) {
+           answerUnsaved("unsaved_save");
+           return std::string();
+         }},
+        {"unsaved_export",
+         [this](const std::string &) {
+           answerUnsaved("unsaved_export");
+           return std::string();
+         }},
+    };
+  }
+
   void handleMenu(const std::string &action, const std::string &arg) {
+    if (menuHandlers_.empty()) registerMenuHandlers();
     std::string error;
-    // TODO: Simplify menu action dispatch.
-    if (action == "open_download") {
-      openDownloadDialog();
-      return;
-    }
-    if (action == "item_options") {
-      if (ui_ && !arg.empty()) {
-        const auto o = session_.overrideFor(arg);
-        const auto merged = project::applyOverride(session_.options(), o);
-        et::ItemOverrideValues v;
-        v.thicknessPx = merged.thicknessPx;
-        v.outlineSizePx = merged.outlineSizePx;
-        v.outlineColor = merged.outlineColor;
-        v.unenchantedOutline = merged.unenchantedOutline;
-        v.unenchantedUnshaded = merged.unenchantedUnshaded;
-        v.mergeColumns = merged.mergeColumns;
-        ui_->SetItemOverrideValues(v);
-        ui_->OpenItemOptionsDialog();
-      }
-      return;
-    }
-    if (action == "cycle_group") {
-      project::AppSettings next = session_.appSettings();
-      next.groupMode = next.groupMode == "none"
-                           ? "prefix"
-                           : (next.groupMode == "prefix" ? "suffix" : "none");
-      showError(session_.setAppSettings(next));
-      if (ui_) ui_->SetGroupMode(next.groupMode);
-      return;
-    }
-    if (action == "open_pick_game") {
-      if (ui_) {
-        std::vector<et::SelectorUi::InstalledChoice> choices;
-        for (const auto &game : session_.installedGames()) {
-          choices.push_back({game.id, game.jar.string()});
-        }
-        ui_->SetInstalledGames(choices);
-        ui_->OpenPickGameDialog();
-      }
-      return;
-    }
-    if (action == "remote_search") {
-      remoteQuery_ = arg;
-      refreshRemoteView();
-      return;
-    }
-    if (action == "remote_snapshots") {
-      includeSnapshots_ = !includeSnapshots_;
-      refreshRemoteView();
-      return;
-    }
-    if (action == "remote_toggle") {
-      if (!openTypes_.insert(arg).second) openTypes_.erase(arg);
-      refreshRemoteView();
-      return;
-    }
-    if (action == "download_version") {
-      enqueueDownload(arg);
-      return;
-    }
-    if (action == "cancel_download") {
-      downloads_.cancel(arg);
-      refreshRemoteView();
-      return;
-    }
-    if (action == "uninstall_version") {
-      uninstall(arg);
-      return;
-    }
-    if (action == "toggle_supported") {
-      toggleSupported(arg);
-      return;
-    }
-    if (action == "new_game_project") {
-      if (ui_) ui_->CloseDialog();
-      const fs::path jar(arg);
-      AppSession::LoadRequest request;
-      error = session_.prepareNewGame(
-          jar, jar.parent_path().filename().string(), request);
-      if (error.empty()) beginLoad(request);
-    } else if (action == "new_game_browse") {
-      if (ui_) ui_->CloseDialog();
-      if (const auto jar =
-              dialogs_.openFile({"jar", "zip"}, config_.app_directory)) {
-        AppSession::LoadRequest request;
-        error = session_.prepareNewGame(*jar, jar->stem().string(), request);
-        if (error.empty()) beginLoad(request);
-      }
-    } else if (action == "new_pack_zip") {
-      newPackProject(dialogs_.openFile({"zip"}, config_.app_directory));
-    } else if (action == "new_pack_folder") {
-      newPackProject(dialogs_.pickFolder(config_.app_directory));
-    } else if (action == "open_project") {
-      if (const auto file =
-              dialogs_.openFile({"etproj"}, config_.app_directory)) {
-        AppSession::LoadRequest request;
-        error = session_.prepareOpenProject(*file, request);
-        if (error.empty()) beginLoad(request);
-      }
-    } else if (action == "save_project") {
-      error = session_.hasProjectFile() ? session_.saveProject() : saveAs();
-    } else if (action == "save_project_as") {
-      error = saveAs();
-    } else if (action == "open_pack") {
-      if (const auto zip = dialogs_.openFile({"zip"}, config_.app_directory)) {
-        AppSession::LoadRequest request;
-        error = session_.prepareOpenPack(*zip, request);
-        if (error.empty()) beginLoad(request);
-      }
-    } else if (action == "close_pack") {
-      if (session_.hasPack() && !session_.isPackProject()) {
-        AppSession::LoadRequest request;
-        error = session_.prepareClosePack(request);
-        if (error.empty()) beginLoad(request);
-      } else {
-        session_.closeCurrent();
-        refreshStore();
-      }
-    } else if (action == "export_pack") {
-      error = exportPack();
-    } else if (action == "open_app_settings") {
-      if (ui_) {
-        ui_->SetAppSettings(session_.appSettings());
-        ui_->OpenAppSettingsDialog();
-      }
-      return;
-    } else if (action == "open_project_settings") {
-      openProjectSettings();
-      return;
-    } else if (action == "quit") {
-      requestQuit();
-      return;
-    } else if (action == "unsaved_cancel" || action == "unsaved_dont_save" ||
-               action == "unsaved_save" || action == "unsaved_export") {
-      answerUnsaved(action);
-      refreshMenu();
-      return;
+    if (const auto handler = menuHandlers_.find(action);
+        handler != menuHandlers_.end()) {
+      error = handler->second(arg);
     }
     showError(error);
     refreshMenu();
@@ -1001,9 +1140,9 @@ struct Application::Impl {
 
   FileDialogs dialogs_;
 
-  et::Store store_;
-  et::UiCallbacks callbacks_;
-  et::SelectorUi *ui_ = nullptr;
+  Store store_;
+  UiCallbacks callbacks_;
+  SelectorUi *ui_ = nullptr;
 
   bool syncing_ = false;
   bool running_ = false;
@@ -1012,8 +1151,8 @@ struct Application::Impl {
 Application::Application(ApplicationConfig config)
     : impl_(std::make_unique<Impl>(std::move(config))) {}
 Application::~Application() = default;
-et::Store &Application::store() { return impl_->store_; }
-const et::Store &Application::store() const { return impl_->store_; }
+Store &Application::store() { return impl_->store_; }
+const Store &Application::store() const { return impl_->store_; }
 void Application::requestClose() noexcept { impl_->requestQuit(); }
 
 bool Application::init() {
@@ -1099,9 +1238,9 @@ int Application::run() {
       "selector", {metrics.logicalWidth, metrics.logicalHeight});
   context->SetDensityIndependentPixelRatio(metrics.density);
 
-  auto ui = std::make_unique<et::SelectorUi>(
-      context, impl_->store_, impl_->callbacks_,
-      impl_->config_.assets_directory.string());
+  auto ui =
+      std::make_unique<SelectorUi>(context, impl_->store_, impl_->callbacks_,
+                                   impl_->config_.assets_directory.string());
 
   if (!context || !ui->Initialize()) {
     ui.reset();
