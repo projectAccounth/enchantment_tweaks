@@ -25,6 +25,8 @@ struct BuildOptions {
   std::optional<std::string> outlineTextureNamespace;
   std::optional<std::string> outlineTextureKey;
 
+  /// Display transforms of the model the sprite came from. Empty means the defaults.
+  std::map<DisplayTransformType, DisplayTransform> baseDisplay;
   std::map<DisplayTransformType, DisplayTransform> overrideTransforms;
 };
 

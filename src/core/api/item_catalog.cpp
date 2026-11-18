@@ -246,8 +246,9 @@ ItemCatalog ItemCatalog::load(const fs::path &basePath,
 
         image::Image sprite(tex->width, tex->height, tex->pixels);
         if (item.sprite.empty()) item.sprite = sprite;
-        item.sprites.emplace(
-            modelId, conversion::ModelSprite{texName, std::move(sprite)});
+        conversion::ModelSprite entry{texName, std::move(sprite)};
+        entry.display = model.display;
+        item.sprites.emplace(modelId, std::move(entry));
       } catch (const std::exception &e) {
         debug::Logger::warning()
             << "skipping model " << modelId << " of " << id << ": " << e.what();

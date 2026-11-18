@@ -62,6 +62,8 @@ struct ModelSprite {
   /// Resolved custom model and its textures; empty for generated sprites.
   json customModel;
   std::map<std::string, image::Image> customTextures;
+  /// Display transforms of the resolved model this sprite belongs to.
+  std::map<mesh::DisplayTransformType, mesh::DisplayTransform> display;
 
   [[nodiscard]] bool isCustom() const { return !customModel.is_null(); }
 };

@@ -8,6 +8,7 @@
 
 #include <cstddef>
 #include <cstdint>
+#include <algorithm>
 #include <map>
 #include <optional>
 #include <set>
@@ -36,9 +37,11 @@ json hasComponentNode(const std::string &component, json onTrue, json onFalse) {
 std::vector<uint8_t>
 modelBytes(const image::Image &sprite, const std::string &ns,
            const std::string &textureKey, const ItemVariantOptions &options,
-           bool withOutline, const std::string &outlineKey) {
+           bool withOutline, const std::string &outlineKey,
+           const std::map<mesh::DisplayTransformType, mesh::DisplayTransform> &display) {
   mesh::BuildOptions build;
   build.thicknessPx = options.thicknessPx;
+  build.baseDisplay = display;
   build.textureNamespace = ns;
   build.textureKey = textureKey;
   build.outlineOnly = false;
@@ -95,9 +98,9 @@ private:
     out_.files.push_back({path, std::move(bytes)});
   }
 
-  //  a custom 3D model keeps its elements, each texture gets an
-  // unshaded copy, and the glowing model points at those copies.
-  // TODO: Add outline support for custom 3D models.
+  // A custom 3D model keeps its elements, each texture gets an unshaded copy, and the glowing
+  // model points at those copies. With an outline, a copy of every element is inflated by the
+  // outline width and pushed one unit back, so the body stays in front of it.
   void generateCustomModel(const std::string &modelId,
                            const ModelSprite &source) {
     if (!generatedModels_.insert(modelId).second) return;
@@ -124,10 +127,45 @@ private:
         continue;
       value = ref + kUnshadedSuffix;
     }
+    if (options_.outlineSizePx > 0.0) {
+      const std::string outlinePath = modelPath + kOutlineSuffix;
+      addOnce("assets/" + ns + "/textures/" + outlinePath + kUnshadedSuffix + ".png",
+              makeOutlineSprite(16, 16, options_.outlineColor, true).encodePng());
+      glow["textures"]["outline"] = ns + ":" + outlinePath + kUnshadedSuffix;
+      addCustomOutline(glow, options_.outlineSizePx);
+    }
     const std::string text = glow.dump();
     addOnce("assets/" + ns + "/models/" + modelPath + kEnchantedSuffix +
                 ".json",
             {text.begin(), text.end()});
+  }
+
+  // Adds an inflated, outline-textured copy of every element, first in the list. The copies
+  // are pushed one unit back, so the body is drawn in front of them.
+  static void addCustomOutline(json &model, double widthPx) {
+    if (!model.contains("elements") || !model.at("elements").is_array()) return;
+    const auto clamp = [](double v) { return std::clamp(v, -16.0, 32.0); };
+    json outline = json::array();
+    for (const auto &element : model.at("elements")) {
+      if (!element.contains("from") || !element.contains("to")) continue;
+      const auto &from = element.at("from");
+      const auto &to = element.at("to");
+      json copy = element;
+      copy["from"] = {clamp(from.at(0).get<double>() - widthPx), clamp(from.at(1).get<double>() - widthPx),
+                      clamp(from.at(2).get<double>() - 1.0)};
+      copy["to"] = {clamp(to.at(0).get<double>() + widthPx), clamp(to.at(1).get<double>() + widthPx),
+                    clamp(to.at(2).get<double>() - 1.0)};
+      json faces = json::object();
+      for (const char *dir : {"north", "south", "east", "west", "up", "down"}) {
+        faces[dir] = {{"texture", "#outline"}, {"uv", {0, 0, 16, 16}}};
+      }
+      copy["faces"] = faces;
+      outline.push_back(copy);
+    }
+    json all = json::array();
+    for (const auto &element : outline) all.push_back(element);
+    for (const auto &element : model.at("elements")) all.push_back(element);
+    model["elements"] = all;
   }
 
   void generateModel(const std::string &modelId, const ModelSprite &source) {
@@ -157,7 +195,7 @@ private:
     addOnce("assets/" + ns + "/models/" + modelPath + kEnchantedSuffix +
                 ".json",
             modelBytes(source.sprite, ns, unshadedKey, options_, hasOutline,
-                       unshadedOutlineKey));
+                       unshadedOutlineKey, source.display));
 
     if (options_.unenchantedOutline) {
       const std::string key =
@@ -172,7 +210,8 @@ private:
       }
       addOnce("assets/" + ns + "/models/" + modelPath + kUnenchantedSuffix +
                   ".json",
-              modelBytes(source.sprite, ns, key, options_, hasOutline, outKey));
+              modelBytes(source.sprite, ns, key, options_, hasOutline, outKey,
+                         source.display));
     }
   }
 
@@ -244,8 +283,9 @@ convertItemDefinition(const std::string &itemNs, const std::string &itemId,
         "convertItemDefinition: thickness must be positive");
   }
   for (const auto &[modelId, source] : spritesByModel) {
-    // TODO: handle model that uses multiple textures (like someone decides to
-    // go mental and make a custom compass model)
+    // A model with several textures (a custom compass, say) is generated once, in
+    // generateCustomModel, and each of its textures is written once (addOnce), so nothing is
+    // repeated for it here.
     if (!source.isCustom() && source.sprite.empty()) {
       throw std::invalid_argument("convertItemDefinition: empty sprite for " +
                                   modelId);
