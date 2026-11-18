@@ -30,7 +30,7 @@ struct VersionGroup {
 struct VersionFilter {
   std::string minRelease = "1.21.4"; // releases below this are hidden
   bool includeSnapshots = false;     // snapshots are off by default
-  // TODO: support new snapshot format
+  // Weekly ("24w44a") or numbered ("26.2-snapshot-1") snapshot id.
   std::string snapshotCutoff = "24w44a";
 };
 
